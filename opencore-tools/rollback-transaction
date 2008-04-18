@@ -1,0 +1,76 @@
+#!/bin/sh
+#
+# validate session-id
+SESSION_ID=`echo "$1" | egrep "^[-0123456789abcdef]*$"`
+if [ -z "$SESSION_ID" ]; then
+  echo "Invalid sessionid"
+  exit 1
+fi
+
+if [ ! -d /var/opencore/conf/rollback/$SESSION_ID ]; then
+  exit 0
+fi
+
+for rollfile in /var/opencore/conf/rollback/$SESSION_ID/*; do
+  HDR=`cat "$rollfile" | head -1`
+  CMD=`echo "$HDR" | cut -f1 -d" "`
+  if [ "$CMD" = "DELETE" ]; then
+    CMD="UPDATE"
+  fi
+  if [ "$CMD" = "UPDATE" ]; then
+    FILE=`echo "$HDR" | sed -e "s/[A-Z]* [[:digit:]]* [[:digit:]]* [[:digit:]]* //"`
+    FUID=`echo "$HDR" | cut -f2 -d" "`
+    FGID=`echo "$HDR" | cut -f3 -d" "`
+    FMODE=`echo "$HDR" | cut -f4 -d" "`
+    
+    echo -n "Rolling back $FILE..."
+    
+    if [ -e "$FILE" ]; then
+      rm -f "$FILE"
+    fi
+    touch "$FILE"
+    chown $FUID "$FILE"
+    chgrp $FGID "$FILE"
+    chmod $FMODE "$FILE"
+    tail +2 < "$rollfile" >> "$FILE"
+    echo " done"
+  elif [ "$CMD" = "CREATE" ]; then
+    FILE=`echo "$HDR" | sed -e "s/^CREATE //"`
+    echo -n "Rolling back $FILE..."
+    rm -f "$FILE"
+    echo " done"
+  elif [ "$CMD" = "RMDIR" ]; then
+    opwd=`pwd`
+    DIR=`echo "$HDR" | sed -e "s/[A-Z]* [[:digit:]]* [[:digit:]]* [[:digit:]]* //"`
+    FUID=`echo "$HDR" | cut -f2 -d" "`
+    FGID=`echo "$HDR" | cut -f3 -d" "`
+    FMODE=`echo "$HDR" | cut -f4 -d" "`
+    if [ -d "$DIR" ]; then
+      echo "Cannot roll back '$DIR': already exists"
+      exit 1
+    fi
+    mkdir "$DIR"
+    chown $FUID "$DIR"
+    chgrp $FGID "$DIR"
+    chmod $FMODE "$DIR"
+    echo -n "Rolling back directory $DIR..."
+    cd "$DIR" || { echo "Rollback fail: could not cd to $DIR"; exit 1; }
+    tail +2 < "$rollfile" | bzip2 -dc | tar xpf - || { echo "Rollback fail: untar"; exit 1; }
+    cd "$opwd"
+    echo " done"
+  elif [ "$CMD" = "MKUSER" ]; then
+    UNAME=`echo "$HDR" | cut -f2 -d" "`
+    echo -n "Rolling back user ${UNAME}..."
+    MATCH=`id "$UNAME" 2>/dev/null | egrep "groups=.*[[:digit:]]*(paneluser)"`
+    if [ ! -z "$MATCH" ]; then
+	  /usr/sbin/userdel "$UNAME" >/dev/null 2>&1 || {
+	    echo " failed"
+	    exit 1
+	  }
+	  echo " done"
+	else
+	  echo " failed (not a panel user)"
+	fi
+  fi
+done
+rm -rf /var/opencore/conf/rollback/$SESSION_ID

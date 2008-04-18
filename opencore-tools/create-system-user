@@ -1,0 +1,69 @@
+#!/bin/sh
+if [ -f /var/opencore/conf/customize/user-homedirs ]; then
+  . /var/opencore/conf/customize/user-homedirs
+else
+  CUSTOMIZE_HASHING_LEVEL=0
+  CUSTOMIZE_BASE_DIR=/home
+fi
+TRANSID="$1"
+USERNAME=`echo "$2" | egrep "^..*$"`
+if [ -z "$USERNAME" ]; then
+  echo "Username not provided or too short"
+  exit 1
+fi
+id "$USERNAME" >/dev/null 2>&1 && {
+  echo "User already exists"
+  exit 1
+}
+
+PASSWORD="$3"
+if [ -z "$PASSWORD" ]; then
+  echo "Missing password"
+  exit 1
+fi
+
+if [ ! -d /var/opencore/conf/rollback/$TRANSID ]; then
+  mkdir /var/opencore/conf/rollback/$TRANSID || {
+    echo "Error creating rollback directory"
+    exit 1
+  }
+fi
+RBFILE="/var/opencore/conf/rollback/$TRANSID/${USERNAME}.rollback"
+
+HASH1=`echo "$USERNAME" | cut -c1`
+HASH2=`echo "$USERNAME" | cut -c2`
+
+case "$CUSTOMIZE_HASHING_LEVEL" in
+  1)
+	if [ ! -d "$CUSTOMIZE_BASE_DIR/${HASH1}" ]; then
+          mkdir "$CUSTOMIZE_BASE_DIR/${HASH1}" || {
+	    echo "mkdir failure"
+	    exit 1
+	  }
+        fi
+        HOMEDIR="$CUSTOMIZE_BASE_DIR/${HASH1}/$USERNAME"
+	;;
+  2)
+        if [ ! -d "$CUSTOMIZE_BASE_DIR/${HASH1}" ]; then
+          mkdir "$CUSTOMIZE_BASE_DIR/${HASH1}" || { 
+	    echo "mkdir failure"
+	    exit 1
+	  }
+        fi
+        if [ ! -d "$CUSTOMIZE_BASE_DIR/${HASH1}/${HASH2}" ]; then
+          mkdir "$CUSTOMIZE_BASE_DIR/${HASH1}/${HASH2}" || {
+	    echo "mkdir failure"
+	    exit 1
+	  }
+        fi
+	HOMEDIR="$CUSTOMIZE_BASE_DIR/${HASH1}/${HASH2}/$USERNAME"
+	;;
+  *)
+	HOMEDIR="$CUSTOMIZE_BASE_DIR/$USERNAME"
+	;;
+esac
+# groupadd -r paneluser 2>/dev/null || true
+/usr/sbin/useradd -m -d "$HOMEDIR" -G paneluser "$USERNAME" && \
+	echo "MKUSER $USERNAME" > $RBFILE && \
+	chmod 711 "$HOMEDIR" && \
+	echo "$USERNAME:$PASSWORD" | /usr/sbin/chpasswd -e

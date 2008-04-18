@@ -1,0 +1,26 @@
+#!/bin/sh
+SERVICE=`echo "$2" | egrep "^[[:alnum:]]*$"`
+if [ -z "$SERVICE" ]; then
+  echo "No (valid) service specified"
+  exit 1
+fi
+if [ ! -f /etc/init.d/$SERVICE ]; then
+  echo "Service not found"
+  exit 1
+fi
+ACTION="$1"
+case "$ACTION" in
+	start)
+		exec /etc/init.d/$SERVICE start
+		;;
+	stop)
+		exec /etc/init.d/$SERVICE stop
+		;;
+	reload)
+		/etc/init.d/$SERVICE reload || /etc/init.d/$SERVICE restart || exit $?
+		;;
+	*)
+		echo "Unknown command"
+		exit 1
+		;;
+esac

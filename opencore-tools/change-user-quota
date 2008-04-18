@@ -1,0 +1,18 @@
+#!/bin/sh
+TRANSACTION_ID="$1"
+USERNAME=`echo "$2" | egrep "^..*$"`
+if [ -z "$USERNAME" ]; then
+  echo "Username not provided or too short"
+  exit 1
+fi
+id "$USERNAME" 2>/dev/null | \
+	egrep "groups=.*[[:digit:]]*(paneluser)" >/dev/null 2>&1 || {
+	
+  echo "User [$USERNAME] not in paneluser group"
+  exit 1
+}
+
+USERHOME=`eval echo ~$USERNAME`
+FS=`df -P $USERHOME | tail -1 | awk '{print $6}'`
+
+echo "$USERNAME $3 $4 0 0" | /usr/sbin/setquota -b $FS

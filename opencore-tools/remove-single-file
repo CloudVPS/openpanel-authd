@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# validate session-id
+SESSION_ID=`echo "$1" | egrep "^[-0123456789abcdef]*$"`
+if [ -z "$SESSION_ID" ]; then
+  echo "Invalid sessionid"
+  exit 1
+fi
+
+# parse other arguments
+TO_FILE="$2"
+if [ -z "$TO_FILE" ]; then
+  echo "No file specified"
+  exit 1
+fi
+
+if [ ! -f "$TO_FILE" ]; then
+  exit 0
+fi
+
+# create the rollback directory for this session if it didn't exist
+if [ ! -d /var/opencore/conf/rollback/$SESSION_ID ]; then
+  mkdir /var/opencore/conf/rollback/$SESSION_ID || {
+    echo "Error creating rollback directory"
+    exit 1
+  }
+fi
+
+# generate the filename for the rollback-file
+RBFN=`echo "$TO_FILE" | tr "./ " ___ | sed -e "s/^_//"`
+RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
+
+# depending on the status of the destination file, create the apropriate
+# rollback-file
+ST=`stat -c "%u %g %a" "$TO_FILE"`
+echo "DELETE $ST $TO_FILE" > $RBFILE || { echo "I/O error"; exit 1; }
+cat "$TO_FILE" >> $RBFILE || { echo "I/O error"; exit 1; }
+
+# Remove the requested file.
+rm -f "$TO_FILE" || { echo "Delete failed"; exit 1; }

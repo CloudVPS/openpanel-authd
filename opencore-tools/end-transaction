@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# validate session-id
+SESSION_ID=`echo "$1" | egrep "^[-0123456789abcdef]*$"`
+if [ -z "$SESSION_ID" ]; then
+  echo "Invalid sessionid"
+  exit 1
+fi
+
+if [ -d /var/opencore/conf/rollback/$SESSION_ID ]; then
+  rm -rf /var/opencore/conf/rollback/$SESSION_ID
+fi
+

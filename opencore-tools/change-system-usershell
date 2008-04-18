@@ -1,0 +1,21 @@
+#!/bin/sh
+TRANSACTION_ID="$1"
+USERNAME=`echo "$2" | egrep "^..*$"`
+if [ -z "$USERNAME" ]; then
+  echo "Username not provided or too short"
+  exit 1
+fi
+id "$USERNAME" 2>/dev/null | \
+	egrep "groups=.*[[:digit:]]*(paneluser)" >/dev/null 2>&1 || {
+	
+  echo "User not in paneluser group"
+  exit 1
+}
+
+SHELLNAME="$3"
+if [ -z "$SHELLNAME" ]; then
+  echo "Missing shell name"
+  exit 1
+fi
+
+exec /usr/sbin/usermod -s "$SHELLNAME" "$USERNAME"

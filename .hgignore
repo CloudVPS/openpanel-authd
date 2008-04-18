@@ -1,0 +1,11 @@
+syntax: glob
+*.o
+*.a
+makeinclude
+platform.h
+.gdb_history
+ktrace.out
+authd.app
+version.cpp
+version.id
+authd

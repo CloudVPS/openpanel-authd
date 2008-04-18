@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.openpanel.svc.authd.conf>
+  <system>
+    <eventlog>/var/opencore/log/authd.event.log</eventlog>
+  </system>
+</com.openpanel.svc.authd.conf>

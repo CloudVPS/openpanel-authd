@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# validate session-id
+mystat() {
+   stat -c "%u %g %a" "$1" 2>/dev/null && return 0
+   statline=`stat -s "$1"` || { echo "Cannot stat"; exit 1; }
+   uid=`echo "$statline" | sed -e "s/.*st_uid=//;s/ .*//"`
+   if [ -z "$uid" ]; then echo "no uid in: $statline"; exit 1; fi
+   gid=`echo "$statline" | sed -e "s/.*st_gid=//;s/ .*//"`
+   if [ -z "$gid" ]; then echo "no gid in: $statline"; exit 1; fi
+   fmode=`echo "$statline" | sed -e "s/.*st_mode=//;s/ .*//"`
+   if [ -z "$fmode" ]; then echo "no mode in: $statline"; exit 1; fi
+   echo "$uid $gid $fmode"
+}
+
+SESSION_ID=`echo "$1" | egrep "^[-0123456789abcdef]*$"`
+if [ -z "$SESSION_ID" ]; then
+  echo "Invalid sessionid"
+  exit 1
+fi
+
+TO_DIR="$2"
+if [ -z "$TO_DIR" ]; then
+  echo "No directory specified"
+  exit 1
+fi
+
+echo "$TO_DIR" | egrep "^/var/open" >/dev/null && {
+  echo "Invalid directory specified"
+  exit 1
+}
+
+if [ ! -d "$TO_DIR" ]; then
+  exit 0
+fi
+
+# create the rollback directory for this session if it didn't exist
+if [ ! -d /var/opencore/conf/rollback/$SESSION_ID ]; then
+  mkdir /var/opencore/conf/rollback/$SESSION_ID || {
+    echo "Error creating rollback directory"
+    exit 1
+  }
+fi
+
+# generate the filename for the rollback-file
+RBFN=`echo "$TO_DIR" | tr "./ " ___ | sed -e "s/^_//"`
+RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
+
+# create the rollback file (including tar archive of the directory contents)
+ST=`mystat "$TO_DIR"`
+if [ -z "$ST" ]; then
+  echo "Error reading stat result"
+  exit 1
+fi
+echo "RMDIR $ST $TO_DIR" > $RBFILE
+opwd=`pwd`
+cd "$TO_DIR"
+tar pcf - . | bzip2 -c >> $RBFILE
+cd "$opwd"
+
+rm -rf "$TO_DIR"

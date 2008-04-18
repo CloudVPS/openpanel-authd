@@ -1,0 +1,45 @@
+#!/bin/sh
+if [ -f /var/opencore/conf/customize/user-homedirs ]; then
+  . /var/opencore/conf/customize/user-homedirs
+else
+  CUSTOMIZE_HASHING_LEVEL=0
+  CUSTOMIZE_BASE_DIR=/home
+fi
+
+if [ -z "$CUSTOMIZE_ATTIC_DIR" ]; then
+  CUSTOMIZE_ATTIC_DIR=$CUSTOMIZE_BASE_DIR/user.attic
+fi
+
+if [ ! -d "$CUSTOMIZE_ATTIC_DIR" ]; then
+  mkdir "$CUSTOMIZE_ATTIC_DIR"
+fi
+
+TRANSACTION_ID="$1"
+USERNAME=`echo "$2" | egrep "^..*$"`
+
+if [ -z "$USERNAME" ]; then
+  echo "Username not provided or too short"
+  exit 1
+fi
+
+id "$USERNAME" 2>/dev/null || {
+    # user doesn't exist, that's okay
+    exit 0
+}
+
+id "$USERNAME" 2>/dev/null | \
+	egrep "groups=.*[[:digit:]]*(paneluser)" >/dev/null 2>&1 || {
+	
+  echo "User not in paneluser group"
+  exit 1
+}
+
+USERHOME=`eval echo ~$USERNAME`
+if [ -d "$USERHOME" ]; then
+  mv "$USERHOME" ${CUSTOMIZE_ATTIC_DIR}/${USERNAME} || { echo "attic-move failed"; exit 1; }
+  chown root:root ${CUSTOMIZE_ATTIC_DIR}/${USERNAME} || { echo "attic-chown failed"; exit 1; }
+  chmod 700 ${CUSTOMIZE_ATTIC_DIR}/${USERNAME} || { echo "attic-chmod failed"; exit 1; }
+  find ${CUSTOMIZE_ATTIC_DIR}/${USERNAME} -user ${USERNAME} -exec chown root:root {} \;
+fi
+
+exec /usr/sbin/userdel "$USERNAME"

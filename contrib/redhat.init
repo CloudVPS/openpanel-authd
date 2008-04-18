@@ -1,0 +1,111 @@
+#!/bin/bash
+#
+# Init file for OpenPanel authd service
+#
+# chkconfig: 2345 91 25
+# description: OpenPanel authd serice
+#
+# processname: authd
+# pidfile: /var/run/com.openpanel.svc.authd.pid
+
+# Source function library
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+[ -r /etc/sysconfig/network ] && . /etc/sysconfig/network
+
+[ -n "$ROOTDIR" ] && ROOTDIR=`echo $ROOTDIR | sed 's#//*#/#g;s#/$##'`
+
+RETVAL=0
+prog="authd"
+
+# Check that networking is up.
+[ "${NETWORKING}" = "no" ] && exit 1
+
+DAEMON=/var/opencore/bin/authd
+NAME=com.openpanel.svc.authd
+
+# Check if executable exists
+test -x $DAEMON || exit 0
+
+waitforpid() {
+  for try in 1 2 3 4 5 6 7 8 9 10; do
+    if [ ! -e /var/run/$NAME.pid ]; then
+      return
+    fi
+    thepid=$(cat /var/run/$NAME.pid 2>/dev/null)
+    if [ -z "$thepid" ]; then
+      return
+    fi
+    kill -0 $thepid || return
+    sleep 1
+  done
+  if [ ! -z "$thepid" ]; then
+    kill -9 $thepid
+  fi
+}
+
+start() {
+	echo -n $"Starting $prog: "
+	if [ -f /var/run/${NAME}.pid ]; then
+	  if kill -0 `cat /var/run/${NAME}.pid` 2>/dev/null; then
+		echo -n $"$prog: already running"
+		failure
+		echo
+		return 1
+	  fi
+	fi
+	daemon $DAEMON || {
+	  failure
+	  echo
+	  return 1
+	}
+	success
+	echo
+}
+
+
+stop() {
+	echo -n $"Stopping $prog: "
+		if [ -f /var/run/${NAME}.pid ]; then
+			if kill -TERM `cat /var/run/${NAME}.pid` 2>/dev/null; then
+				RETVAL=0
+				success
+			else
+				RETVAL=1
+				failure
+			fi
+        else
+        	RETVAL=1
+            failure
+        fi;
+        echo
+        return $RETVAL
+	
+}
+
+
+restart () {
+	stop
+	waitforpid
+	start
+}
+
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		restart
+		;;
+	*)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

@@ -1,0 +1,23 @@
+#!/bin/sh
+SERVICE=`echo "$1" | egrep "^[[:alnum:]]*$"`
+if [ -z "$SERVICE" ]; then
+  echo "No (valid) service specified"
+  exit 1
+fi
+if [ ! -f /etc/init.d/$SERVICE ]; then
+  echo "Service not found"
+  exit 1
+fi
+ACTION="$2"
+case "$ACTION" in
+	0)
+		exec chkconfig --level 345 $SERVICE off
+		;;
+	1)
+		exec  chkconfig --level 345 $SERVICE on
+		;;
+	*)
+		echo "Please use 0 or 1"
+		exit 1
+		;;
+esac
