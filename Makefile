@@ -3,10 +3,10 @@ include makeinclude
 OBJ	= main.o version.o
 
 all: authd.exe
-	mkapp authd
+	grace mkapp authd
 
 version.cpp:
-	mkversion version.cpp
+	grace mkversion version.cpp
 
 authd.exe: $(OBJ)
 	$(LD) $(LDFLAGS) -o authd.exe $(OBJ) $(LIBS)
