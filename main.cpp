@@ -731,7 +731,7 @@ bool commandHandler::installUserFile (const string &fname, const string &dpath,
 	if (realpath[-1] != '/') realpath.strcat ('/');
 	realpath.strcat (pdpath);
 	
-	return installFile (fname, dpath, destuid, destgid);
+	return installFile (fname, realpath, destuid, destgid);
 }
 
 // ==========================================================================
