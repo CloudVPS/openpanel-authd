@@ -48,33 +48,49 @@ RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
 # depending on the status of the destination file, create the apropriate
 # rollback-file
 if [ -f "$TO_FILE" ]; then
-  ST=`stat -c "%u %g %a" "$TO_FILE"`
-  echo "UPDATE $ST $TO_FILE" > $RBFILE || { echo "I/O error"; exit 1; }
-  cat "$TO_FILE" >> $RBFILE || { echo "I/O error"; exit 1; }
+  ST=`stat -c "%a" "$TO_FILE"`
+  echo "UPDATE $FUID $FGID $ST $TO_FILE" > $RBFILE || { echo "I/O error"; exit 1; }
+  /var/opencore/tools/runas $FUID $FGID fcat "$TO_FILE" >> $RBFILE || { echo "I/O error"; exit 1; }
 else
-  echo "CREATE $TO_FILE" > $RBFILE || { echo "I/O error"; exit 1; }
+  echo "CREATE $FUID $FGID $TO_FILE" > $RBFILE || { echo "I/O error"; exit 1; }
 fi
 
 # create a temporary file in the destination directory, we will write
 # the new contents to this file first.
 TO_PATH=`dirname "$TO_FILE"`
-TMP_FILE=`mktemp -p "$TO_PATH" .install_file.XXXXXXXX`
+TMP_FILE=`/var/opencore/tools/runas $FUID $FGID /bin/mktemp -p "$TO_PATH" .install_file.XXXXXXXX`
 if [ -z "$TMP_FILE" ]; then
   echo "Error creating temporary file"
+  rm -f "$RBFILE"
   exit 1
 fi
 if [ ! -f "$TMP_FILE" ]; then
   echo "Error creating temporary file"
+  rm -f "$RBFILE"
   exit 1
 fi
 
 # set permissions on the new file
-chown $FUID "$TMP_FILE" || { echo "Tempfile chown failed"; rm -f "$TMP_FILE"; exit 1; }
-chgrp $FGID "$TMP_FILE" || { echo "Tempfile chgrp failed"; rm -f "$TMP_FILE"; exit 1; }
-chmod $MODE "$TMP_FILE" || { echo "Tempfile chmod failed"; rm -f "$TMP_FILE"; exit 1; }
+/var/opencore/tools/runas $FUID $FGID /bin/chmod $MODE "$TMP_FILE" || {
+	echo "Tempfile chmod failed"
+	/var/opencore/tools/runas $FUID $FGID rm -f "$TMP_FILE"
+  rm -f "$RBFILE"
+	exit 1
+}
 
 # copy the source data into the temporary file
-/var/opencore/tools/fcat "$FROM_FILE" > "$TMP_FILE" || { echo "I/O error"; rm -f "$TMP_FILE"; exit 1; }
+/var/opencore/tools/fcat "$FROM_FILE" | \
+	/var/opencore/tools/runas $FUID $FGID write "$TMP_FILE" || {
+		echo "I/O error"
+		/var/opencore/tools/runas $FUID $FGID /bin/rm -f "$TMP_FILE"
+	    rm -f "$RBFILE"
+		exit 1
+	}
 
 # make the temporary file the new active file
-mv "$TMP_FILE" "$TO_FILE" || { echo "Tempfile install failed"; rm -f "$TMP_FILE"; exit 1; }
+/var/opencore/tools/runas $FUID $FGID mv "$TMP_FILE" "$TO_FILE" || {
+	echo "Tempfile install failed"
+	/var/opencore/tools/runas $FUID $FGID rm -f "$TMP_FILE"
+    rm -f "$RBFILE"
+	exit 1
+}

@@ -26,18 +26,18 @@ for rollfile in /var/opencore/conf/rollback/$SESSION_ID/*; do
     echo -n "Rolling back $FILE..."
     
     if [ -e "$FILE" ]; then
-      rm -f "$FILE"
+      /var/opencore/tools/runas $FUID $FGID /bin/rm -f "$FILE"
     fi
-    touch "$FILE"
-    chown $FUID "$FILE"
-    chgrp $FGID "$FILE"
-    chmod $FMODE "$FILE"
-    tail +2 < "$rollfile" >> "$FILE"
+    /var/opencore/tools/runas $FUID $FGID touch "$FILE"
+    /var/opencore/tools/runas $FUID $FGID chmod $FMODE "$FILE"
+    tail +2 < "$rollfile" | /var/opencore/tools/runas $FUID $FGID append "$FILE"
     echo " done"
   elif [ "$CMD" = "CREATE" ]; then
-    FILE=`echo "$HDR" | sed -e "s/^CREATE //"`
+    FILE=`echo "$HDR" | sed -e "s/[A-Z]* [[:digit:]]* [[:digit:]]* //"`
+    FUID=`echo "$HDR" | cut -f2 -d" "`
+    FGID=`echo "$HDR" | cut -f3 -d" "`
     echo -n "Rolling back $FILE..."
-    rm -f "$FILE"
+    /var/opencore/runas $FUID $FGID /bin/rm -f "$FILE"
     echo " done"
   elif [ "$CMD" = "RMDIR" ]; then
     opwd=`pwd`
