@@ -27,9 +27,14 @@ int main (int argc, char *argv[])
 	gid = strtoul (argv[2],NULL,10);
 	
 	if (strlen (argv[3]) > 256) return 1;
-	if (strchr (argv[3], '/') == 0) return 1;
-	
-	sprintf (cmdpath, "/var/opencore/tools/%s", argv[3]);
+	if (argv[3][0] == '/')
+	{
+		strcpy (cmdpath, argv[3]);
+	}
+	else
+	{
+		sprintf (cmdpath, "/var/opencore/tools/%s", argv[3]);
+	}
 	
 	if (setregid (gid,gid)) return 1;
 	if (setreuid (uid,uid)) return 1;

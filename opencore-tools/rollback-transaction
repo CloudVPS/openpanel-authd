@@ -58,6 +58,23 @@ for rollfile in /var/opencore/conf/rollback/$SESSION_ID/*; do
     tail +2 < "$rollfile" | bzip2 -dc | tar xpf - || { echo "Rollback fail: untar"; exit 1; }
     cd "$opwd"
     echo " done"
+  elif [ "$CMD" = "RMUSERDIR" ]; then
+    opwd=`pwd`
+    DIR=`echo "$HDR" | sed -e "s/[A-Z]* [[:digit:]]* [[:digit:]]* [[:digit:]]* //"`
+    FUID=`echo "$HDR" | cut -f2 -d" "`
+    FGID=`echo "$HDR" | cut -f3 -d" "`
+    FMODE=`echo "$HDR" | cut -f4 -d" "`
+    if [ -d "$DIR" ]; then
+      echo "Cannot roll back '$DIR': already exists"
+      exit 1
+    fi
+    /var/opencore/tools/runas $FUID $FGID mkdir "$DIR" || { echo "Rollback fail: mkdir"; exit 1; }
+    /var/opencore/tools/runas $FUID $FGID chmod $FMODE "$DIR"
+    echo -n "Rolling back directory $DIR..."
+    cd "$DIR" || { echo "Rollback fail: could not cd to $DIR"; exit 1; }
+    tail +2 < "$rollfile" | bzip2 -dc | /var/opencore/tools/runas $FUID $FGID tar xpf - || { echo "Rollback fail: untar"; exit 1; }
+    cd "$opwd"
+    echo " done"
   elif [ "$CMD" = "MKUSER" ]; then
     UNAME=`echo "$HDR" | cut -f2 -d" "`
     echo -n "Rolling back user ${UNAME}..."

@@ -914,9 +914,12 @@ bool commandHandler::makeUserDir (const string &dpath,
 		
 		if (! fs.exists (tpath))
 		{
-			if (! fs.mkdir (tpath))
+			if (! runscript ("make-user-directory",
+								$((unsigned int)destuid)->
+								$((unsigned int)destgid)->
+								$("%o" %format(mode))->
+								$(tpath)))
 			{
-				lasterrorcode = ERR_CMD_FAILED;
 				lasterror = "Could not create directory";
 				
 				AUTHD->log (log::error, "handler", "Error creating "
@@ -925,42 +928,6 @@ bool commandHandler::makeUserDir (const string &dpath,
 				return false;
 			}
 			
-			int fd = open (tpath.str(), O_RDONLY);
-			if (fd<0)
-			{
-				lasterrorcode = ERR_CMD_FAILED;
-				lasterror = "Could open created directory";
-				
-				AUTHD->log (log::error, "handler", "Error open()ing "
-							"created directory <%S> for user <%S>"
-							%format (tpath,user));
-			}
-			
-			if (fchown (fd,destuid,destgid))
-			{
-				close (fd);
-				lasterrorcode = ERR_CMD_FAILED;
-				lasterror = "Could not set ownership";
-				
-				AUTHD->log (log::error, "handler", "Error chowning "
-							"directory <%S> for user <%S>",
-							tpath.str(), user.str());
-				return false;
-			}
-			
-			if (fchmod (fd, mode))
-			{
-				close (fd);
-				lasterrorcode = ERR_CMD_FAILED;
-				lasterror = "Could not set permissions";
-				
-				AUTHD->log (log::error, "handler", "Error setting "
-							"mode of directory <%S> for user <%S>",
-							tpath.str(), user.str());
-				return false;
-			}
-			
-			close (fd);
 		}
 	}
 	

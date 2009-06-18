@@ -1,0 +1,39 @@
+#!/bin/sh
+
+SESSION_ID=`echo "$1" | egrep "^[-0123456789abcdef]*$"`
+if [ -z "$SESSION_ID" ]; then
+  echo "Invalid sessionid"
+  exit 1
+fi
+
+TO_UID=`echo "$2" | grep "^[0123456789]*$"`
+if [ -z "$TO_UID" ]; then
+  echo "No userid specifified"
+  exit 1
+fi
+
+TO_GID=`echo "$3" | grep "^[0123456789]*$"`
+if [ -z "$TO_GID" ]; then
+  echo "No groupid specifified"
+  exit 1
+fi
+
+TO_MODE=`echo "$4" | grep ^[01234567]*$"`
+if [ -z "$TO_MODE" ]; then
+  echo "No mode specified"
+  exit 1
+fi
+
+TO_DIR="$5"
+if [ -z "$TO_DIR" ]; then
+  echo "Invalid directory specified"
+  exit 1
+fi
+
+# generate the filename for the rollback-file
+RBFN=`echo "$TO_DIR" | tr "./ ?*$" ______ | sed -e "s/^_//"`
+RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
+
+/var/opencore/tools/runas $TO_UID $TO_GID /bin/mkdir "$TO_DIR" || { echo "Error creating directory"; exit 1; }
+/var/opencore/tools/runas $TO_UID $TO_GID /bin/chmod "$TO_MODE" "$TO_DIR" || { echo "Error setting director mode"; exit 1; }
+echo "MKUSERDIR $TO_UID $TO_GID $TO_DIR" > $RBFILE
