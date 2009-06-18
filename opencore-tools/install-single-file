@@ -88,9 +88,9 @@ fi
 	}
 
 # make the temporary file the new active file
-/var/opencore/tools/runas $FUID $FGID mv "$TMP_FILE" "$TO_FILE" || {
+/var/opencore/tools/runas $FUID $FGID /bin/mv "$TMP_FILE" "$TO_FILE" || {
 	echo "Tempfile install failed"
-	/var/opencore/tools/runas $FUID $FGID rm -f "$TMP_FILE"
+	/var/opencore/tools/runas $FUID $FGID /bin/rm -f "$TMP_FILE"
     rm -f "$RBFILE"
 	exit 1
 }

@@ -334,6 +334,11 @@ void socketWorker::handle (tcpsocket &s)
 					if (handler.installFile (cmd[1], cmd[2])) cmdok = true;
 					break;
 				
+				incaseof ("installuserfile") :
+					if (cmd.count() != 3) break;
+					if (handler.installUserFile (cmd[1], cmd[2], cmd[3])) cmdok = true;
+					break;
+				
 				incaseof ("deletefile") :
 					if (cmd.count() != 2) break;
 					if (handler.deleteFile (cmd[1])) cmdok = true;
@@ -656,10 +661,82 @@ bool commandHandler::runScript (const string &scriptName,
 	return true;
 }
 
+bool commandHandler::installUserFile (const string &fname, const string &dpath,
+									  const string &user)
+{
+	string pdpath = (dpath[0] == '/') ? dpath.mid(1) : dpath;
+	if (dpath.strstr ("..") >= 0)
+	{
+		lasterrorcode = ERR_POLICY;
+		lasterror = "Destination directory contains illegal characters";
+		
+		AUTHD->log (log::error, "handler", "Illegal characters in "
+					"makeuserdir argument");
+		return false;
+	}
+	
+	string realpath;
+	value pw;
+	value ugr;
+	value gr;
+	uid_t destuid = 0;
+	gid_t destgid = 0;
+	
+	gr = kernel.userdb.getgrnam ("paneluser");
+	if (! gr)
+	{
+		lasterrorcode = ERR_NOT_FOUND;
+		lasterror = "The paneluser group was not found";
+		
+		AUTHD->log (log::error, "handler", "No paneluser group found");
+		return false;
+	}
+	
+	pw = kernel.userdb.getpwnam (user);
+	if (! pw)
+	{
+		lasterrorcode = ERR_NOT_FOUND;
+		lasterror = "The user was not found";
+		AUTHD->log (log::error, "handler", "Unknown user <%S>", user.str());
+		return false;
+	}
+	
+	destuid = pw["uid"].uval();
+	destgid = pw["gid"].uval();
+	
+	ugr = kernel.userdb.getgrgid (destgid);
+	if ( ! ugr)
+	{
+		lasterrorcode = ERR_NOT_FOUND;
+		lasterror = "The user's primary group was not found";
+		
+		AUTHD->log (log::error, "handler", "Could not back-resolve gid #%u ",
+					pw["gid"].uval());
+		return false;
+	}
+	
+	if (! gr["members"].exists (user))
+	{
+		lasterrorcode = ERR_POLICY;
+		lasterror = "The user is not a member of group paneluser";
+		
+		AUTHD->log (log::error, "handler", "User <%S> not a member of "
+					"group paneluser", user.str());
+		return false;
+	}
+	
+	realpath = pw["home"];
+	if (realpath[-1] != '/') realpath.strcat ('/');
+	realpath.strcat (pdpath);
+	
+	return installFile (fname, dpath, destuid, destgid);
+}
+
 // ==========================================================================
 // METHOD commandHandler::installFile
 // ==========================================================================
-bool commandHandler::installFile (const string &fname, const string &_dpath)
+bool commandHandler::installFile (const string &fname, const string &_dpath,
+								  uid_t destuid, gid_t destgid)
 {
 	string tfname;
 	string tdname;
@@ -729,6 +806,10 @@ bool commandHandler::installFile (const string &fname, const string &_dpath)
 			return false;
 		}
 	}
+	
+	if ( (!uid) && (destuid) ) uid = destuid;
+	if ( (!gid) && (destgid) ) gid = destgid;
+	
 	if (perms.exists ("perms"))
 	{
 		mode = perms["perms"].sval().toint (8);
@@ -896,7 +977,6 @@ bool commandHandler::makeUserDir (const string &dpath,
 		
 		AUTHD->log (log::error, "handler", "User <%S> not a member of "
 					"group paneluser", user.str());
-		gr.savexml ("/tmp/gr.xml");
 		return false;
 	}
 	

@@ -112,12 +112,23 @@ public:
 						
 	void				 setModule (const string &moduleName);
 						
+						 /// Install a file to a user's homedir.
+						 /// \param fileName The name of the file in the
+						 ///                 source path to copy.
+						 /// \param destPath The directory to copy to.
+						 /// \param user The user we're messing with.
+	bool				 installUserFile (const string &fileName,
+									  	 const string &destPath,
+										 const string &user);
+
 						 /// Install a file to the filesystem.
 						 /// \param fileName The name of the file in the
 						 ///                 source path to copy.
-						 /// \param destPath The directory to
+						 /// \param destPath The directory to copy to.
 	bool				 installFile (const string &fileName,
-									  const string &destPath);
+									  const string &destPath,
+									  uid_t uid=0,
+									  gid_t gid=0);
 						 
 						 /// Remove a file from the filesystem.
 						 /// \param fileName The name of the file to
