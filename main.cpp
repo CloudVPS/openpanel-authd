@@ -915,6 +915,7 @@ bool commandHandler::makeUserDir (const string &dpath,
 		if (! fs.exists (tpath))
 		{
 			if (! runScript ("make-user-directory",
+								$(transactionid)->
 								$((unsigned int)destuid)->
 								$((unsigned int)destgid)->
 								$("%o" %format(mode))->
