@@ -335,7 +335,7 @@ void socketWorker::handle (tcpsocket &s)
 					break;
 				
 				incaseof ("installuserfile") :
-					if (cmd.count() != 3) break;
+					if (cmd.count() != 4) break;
 					if (handler.installUserFile (cmd[1], cmd[2], cmd[3])) cmdok = true;
 					break;
 				
