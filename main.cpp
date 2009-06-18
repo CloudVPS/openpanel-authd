@@ -664,6 +664,8 @@ bool commandHandler::runScript (const string &scriptName,
 bool commandHandler::installUserFile (const string &fname, const string &dpath,
 									  const string &user)
 {
+	AUTHD->log (log::info, "handler", "installUserFile (%s,%s,%s)"
+						%format (fname, dpath, user));
 	string pdpath = (dpath[0] == '/') ? dpath.mid(1) : dpath;
 	if (dpath.strstr ("..") >= 0)
 	{
