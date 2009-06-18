@@ -853,6 +853,8 @@ bool commandHandler::makeUserDir (const string &dpath,
 	value pw;
 	value ugr;
 	value gr;
+	uid_t destuid;
+	gid_t destgid;
 	
 	gr = kernel.userdb.getgrnam ("paneluser");
 	if (! gr)
@@ -873,7 +875,10 @@ bool commandHandler::makeUserDir (const string &dpath,
 		return false;
 	}
 	
-	ugr = kernel.userdb.getgrgid (pw["gid"].uval());
+	destuid = pw["uid"].uval();
+	destgid = pw["gid"].uval();
+	
+	ugr = kernel.userdb.getgrgid (destgid);
 	if ( ! ugr)
 	{
 		lasterrorcode = ERR_NOT_FOUND;
@@ -915,12 +920,25 @@ bool commandHandler::makeUserDir (const string &dpath,
 				lasterror = "Could not create directory";
 				
 				AUTHD->log (log::error, "handler", "Error creating "
-							"directory <%S> for user <%S>",
-							tpath.str(), user.str());
+							"directory <%S> for user <%S>"
+							%format (tpath,user));
 				return false;
 			}
-			if (! fs.chown (tpath, user, ugr["groupname"]))
+			
+			int fd = open (tpath.str(), O_RDONLY);
+			if (fd<0)
 			{
+				lasterrorcode = ERR_CMD_FAILED;
+				lasterror = "Could open created directory";
+				
+				AUTHD->log (log::error, "handler", "Error open()ing "
+							"created directory <%S> for user <%S>"
+							%format (tpath,user));
+			}
+			
+			if (fchown (fd,destuid,destgid))
+			{
+				close (fd);
 				lasterrorcode = ERR_CMD_FAILED;
 				lasterror = "Could not set ownership";
 				
@@ -929,8 +947,10 @@ bool commandHandler::makeUserDir (const string &dpath,
 							tpath.str(), user.str());
 				return false;
 			}
-			if (! fs.chmod (tpath, mode))
+			
+			if (fchmod (fd, mode))
 			{
+				close (fd);
 				lasterrorcode = ERR_CMD_FAILED;
 				lasterror = "Could not set permissions";
 				
@@ -939,6 +959,8 @@ bool commandHandler::makeUserDir (const string &dpath,
 							tpath.str(), user.str());
 				return false;
 			}
+			
+			close (fd);
 		}
 	}
 	
