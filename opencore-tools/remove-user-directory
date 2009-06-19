@@ -2,15 +2,9 @@
 #
 # validate session-id
 mystat() {
-   stat -c "%u %g %a" "$1" 2>/dev/null && return 0
+   stat -c "%a" "$1" 2>/dev/null && return 0
    statline=`stat -s "$1"` || { echo "Cannot stat"; exit 1; }
-   uid=`echo "$statline" | sed -e "s/.*st_uid=//;s/ .*//"`
-   if [ -z "$uid" ]; then echo "no uid in: $statline"; exit 1; fi
-   gid=`echo "$statline" | sed -e "s/.*st_gid=//;s/ .*//"`
-   if [ -z "$gid" ]; then echo "no gid in: $statline"; exit 1; fi
-   fmode=`echo "$statline" | sed -e "s/.*st_mode=//;s/ .*//"`
-   if [ -z "$fmode" ]; then echo "no mode in: $statline"; exit 1; fi
-   echo "$uid $gid $fmode"
+   echo "$statline" | sed -e "s/.*st_mode=//;s/ .*//"
 }
 
 SESSION_ID=`echo "$1" | egrep "^[-0123456789abcdef]*$"`
@@ -58,17 +52,18 @@ fi
 RBFN=`echo "$TO_DIR" | tr "./ " ___ | sed -e "s/^_//"`
 RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
 
-# create the rollback file (including tar archive of the directory contents)
 ST=`mystat "$TO_DIR"`
 if [ -z "$ST" ]; then
   echo "Error reading stat result"
   exit 1
 fi
-STATONLY=`echo "$ST" | cut -f3 -d" "`
-echo "RMUSERDIR $TO_UID $TO_GID $STATONLY $TO_DIR" > $RBFILE
+
+# create the rollback file (including tar archive of the directory contents)
+echo "RMUSERDIR $TO_UID $TO_GID $ST $TO_DIR" > $RBFILE
 opwd=`pwd`
 if cd "$TO_DIR" 2>/dev/null; then
   /var/opencore/tools/runas $TO_UID $TO_GID /bin/tar pcf - . | bzip2 -c >> $RBFILE
+  # with the contents safely tucked away we can now nuke it from orbit
   cd "$opwd"
   /var/opencore/tools/runas $TO_UID $TO_GID /bin/rm -rf "$TO_DIR"
 else

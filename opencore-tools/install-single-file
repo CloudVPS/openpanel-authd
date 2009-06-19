@@ -13,6 +13,7 @@ if [ -z "$FROM_FILE" ]; then
   echo "No source specified"
   exit 1
 fi
+
 TO_FILE="$3"
 if [ -z "$TO_FILE" ]; then
   echo "No destination specified"
@@ -23,6 +24,8 @@ fi
 FUID="$4"
 FGID="$5"
 MODE="$6"
+
+# set defaults for the optionals if needed
 if [ -z "$MODE" ]; then
   MODE="0640"
 fi
@@ -48,9 +51,20 @@ RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
 # depending on the status of the destination file, create the apropriate
 # rollback-file
 if [ -f "$TO_FILE" ]; then
+  # we'll preserve the access bits. The worst that can happen is that
+  # the user would end up with a copy of the file he could already read
+  # since we're getting the original file contents through runas.
   ST=`stat -c "%a" "$TO_FILE"`
-  echo "UPDATE $FUID $FGID $ST $TO_FILE" > $RBFILE || { echo "I/O error"; exit 1; }
-  /var/opencore/tools/runas $FUID $FGID fcat "$TO_FILE" >> $RBFILE || { echo "I/O error"; exit 1; }
+  echo "UPDATE $FUID $FGID $ST $TO_FILE" > $RBFILE || {
+	  echo "I/O error"
+	  exit 1
+  }
+	
+  /var/opencore/tools/runas $FUID $FGID fcat "$TO_FILE" >> $RBFILE || {
+  	  echo "I/O error"
+  	  exit 1;
+  }
+  
 else
   echo "CREATE $FUID $FGID $TO_FILE" > $RBFILE || { echo "I/O error"; exit 1; }
 fi
@@ -79,6 +93,7 @@ fi
 }
 
 # copy the source data into the temporary file
+# the fcat is probably superfluous. The runas isn't.
 /var/opencore/tools/fcat "$FROM_FILE" | \
 	/var/opencore/tools/runas $FUID $FGID write "$TMP_FILE" || {
 		echo "I/O error"
