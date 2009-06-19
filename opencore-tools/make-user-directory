@@ -34,6 +34,6 @@ fi
 RBFN=`echo "$TO_DIR" | tr "./ ?*$" ______ | sed -e "s/^_//"`
 RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
 
-/var/opencore/tools/runas $TO_UID $TO_GID /bin/mkdir "$TO_DIR" || { echo "Error creating directory"; exit 1; }
+/var/opencore/tools/runas $TO_UID $TO_GID /bin/mkdir -p "$TO_DIR" || { echo "Error creating directory"; exit 1; }
 /var/opencore/tools/runas $TO_UID $TO_GID /bin/chmod "$TO_MODE" "$TO_DIR" || { echo "Error setting director mode"; exit 1; }
 echo "MKUSERDIR $TO_UID $TO_GID $TO_DIR" > $RBFILE
