@@ -27,14 +27,14 @@
 #define ERR_CMD_FAILED		4006
 
 /// A collection of worker threads that handle inbound connections.
-class socketGroup : public threadgroup
+class SocketGroup : public threadgroup
 {
 public:
 						 /// Constructor.
-						 socketGroup (void);
+						 SocketGroup (void);
 						 
 						 /// Destructor.
-						~socketGroup (void);
+						~SocketGroup (void);
 	
 						 /// Set the listening socket.
 	void				 listenTo (const string &path);
@@ -49,18 +49,18 @@ protected:
 	bool				 shouldShutdown;
 };
 
-/// Guardian for file operations. Uses the global metacache to
+/// Guardian for file operations. Uses the global MetaCache to
 /// read module.xml meta-files and make sense of the fileops statements
 /// therein.
-class pathguard
+class PathGuard
 {
 public:
 						 /// Constructor.
-						 /// \param c Pointer to the metacache.
-						 pathguard (void);
+						 /// \param c Pointer to the MetaCache.
+						 PathGuard (void);
 						 
 						 /// Destructor.
-						~pathguard (void);
+						~PathGuard (void);
 						
 	string				*translateSource (const statstring &moduleName,
 										  const string &fileName,
@@ -98,17 +98,17 @@ public:
 											 string &error);
 									
 protected:
-	class metacache		&cache;
+	class MetaCache		&cache;
 };
 
 //  -------------------------------------------------------------------------
 /// A collection of handlers for command sent to the daemon.
 //  -------------------------------------------------------------------------
-class commandHandler
+class CommandHandler
 {
 public:
-						 commandHandler (void);
-						~commandHandler (void);
+						 CommandHandler (void);
+						~CommandHandler (void);
 						
 	void				 setModule (const string &moduleName);
 						
@@ -229,7 +229,7 @@ public:
 	statstring			 module; ///< Associated module name.
 	
 protected:
-	class pathguard		 guard; ///< Our personal psychologist.
+	class PathGuard		 guard; ///< Our personal psychologist.
 };
 
 //  -------------------------------------------------------------------------
@@ -240,11 +240,11 @@ protected:
 /// because it will allow the daemon to keep on running despite changes
 /// to a module's meta-data or the installation of a new module.
 //  -------------------------------------------------------------------------
-class metacache
+class MetaCache
 {
 public:
-						 metacache (void);
-						~metacache (void);
+						 MetaCache (void);
+						~MetaCache (void);
 						
 						 /// Get a specific module's metadata.
 	value				*get (const statstring &moduleName);
@@ -253,44 +253,44 @@ protected:
 	lock<value>			 cache; ///< cached metabase.
 };
 
-extern metacache MCache;
+extern MetaCache MCache;
 
 //  -------------------------------------------------------------------------
 /// A worker thread for handling a connection to the daemon.
 //  -------------------------------------------------------------------------
-class socketWorker : public groupthread
+class SocketWorker : public groupthread
 {
 public:
 							 /// Constructor.
 							 /// \param grp The parent group.
-							 socketWorker (class socketGroup *grp);
+							 SocketWorker (class SocketGroup *grp);
 						 
 							 /// Destructor.
-							~socketWorker (void);
+							~SocketWorker (void);
 			
 							 /// Run-method, performs the thread's job.
 	void					 run (void);
 	void					 handle (tcpsocket &s);
 
 protected:
-	class socketGroup		*group; ///< The parent group.
-	class commandHandler	 handler; ///< The command handler.
+	class SocketGroup		*group; ///< The parent group.
+	class CommandHandler	 handler; ///< The command handler.
 	bool					 shouldShutdown;
 };
 
 //  -------------------------------------------------------------------------
 /// Implementation template for application config.
 //  -------------------------------------------------------------------------
-typedef configdb<class authdApp> appconfig;
+typedef configdb<class AuthdApp> appconfig;
 
 //  -------------------------------------------------------------------------
 /// Main daemon class.
 //  -------------------------------------------------------------------------
-class authdApp : public daemon
+class AuthdApp : public daemon
 {
 public:
-		 				 authdApp (void);
-		 				~authdApp (void);
+		 				 AuthdApp (void);
+		 				~AuthdApp (void);
 		 	
 	int					 main (void);
 	

@@ -18,10 +18,10 @@
 #include <grace/tcpsocket.h>
 #include <grp.h>
 
-APPOBJECT(authdApp);
+APPOBJECT(AuthdApp);
 
-metacache MCache;
-authdApp *AUTHD;
+MetaCache MCache;
+AuthdApp *AUTHD;
 
 #define PATH_SWUPD_SOCKET "/var/opencore/sockets/swupd/swupd.sock"
 
@@ -34,7 +34,7 @@ void handle_SIGTERM (int sig)
 /// Constructor.
 /// Calls daemon constructor, initializes the configdb.
 //  =========================================================================
-authdApp::authdApp (void)
+AuthdApp::AuthdApp (void)
 	: daemon ("com.openpanel.svc.authd"),
 	  conf (this)
 {
@@ -45,14 +45,14 @@ authdApp::authdApp (void)
 //  =========================================================================
 /// Destructor.
 //  =========================================================================
-authdApp::~authdApp (void)
+AuthdApp::~AuthdApp (void)
 {
 }
 
 //  =========================================================================
 /// Main method.
 //  =========================================================================
-int authdApp::main (void)
+int AuthdApp::main (void)
 {
 	setgroups (0, NULL);
 
@@ -65,7 +65,7 @@ int authdApp::main (void)
 	
 	// Add watcher value for event log. System will daemonize after
 	// configuration was validated.
-	conf.addwatcher ("system/eventlog", &authdApp::confLog);
+	conf.addwatcher ("system/eventlog", &AuthdApp::confLog);
 	
 	// Load will fail if watchers did not valiate.
 	if (! conf.load ("com.openpanel.svc.authd", conferr))
@@ -81,7 +81,7 @@ int authdApp::main (void)
 	if (fs.exists (fname))
 		fs.rm (fname);
 	
-	socketGroup socks;
+	SocketGroup socks;
 	
 	try
 	{
@@ -100,7 +100,7 @@ int authdApp::main (void)
 	
 	for (int i=0; i<8; ++i)
 	{
-		new socketWorker (&socks);
+		new SocketWorker (&socks);
 	}
 	
 	signal (SIGTERM, handle_SIGTERM);
@@ -118,7 +118,7 @@ int authdApp::main (void)
 //  =========================================================================
 /// Configuration watcher for the event log.
 //  =========================================================================
-bool authdApp::confLog (config::action act, keypath &kp,
+bool AuthdApp::confLog (config::action act, keypath &kp,
 							  const value &nval, const value &oval)
 {
 	string tstr;
@@ -148,25 +148,25 @@ bool authdApp::confLog (config::action act, keypath &kp,
 }
 
 // ==========================================================================
-// CONSTRUCTOR socketWorker
+// CONSTRUCTOR SocketWorker
 // ==========================================================================
-socketWorker::socketWorker (socketGroup *grp) : groupthread (*grp)
+SocketWorker::SocketWorker (SocketGroup *grp) : groupthread (*grp)
 {
 	group = grp;
 	spawn ();
 }
 
 // ==========================================================================
-// DESTRUCTOR socketWorker
+// DESTRUCTOR SocketWorker
 // ==========================================================================
-socketWorker::~socketWorker (void)
+SocketWorker::~SocketWorker (void)
 {
 }
 
 // ==========================================================================
-// METHOD socketWorker::run
+// METHOD SocketWorker::run
 // ==========================================================================
-void socketWorker::run (void)
+void SocketWorker::run (void)
 {
 	shouldShutdown = false;
 	while (! shouldShutdown)
@@ -261,9 +261,9 @@ void socketWorker::run (void)
 }
 
 // ==========================================================================
-// METHOD socketWorker::handle
+// METHOD SocketWorker::handle
 // ==========================================================================
-void socketWorker::handle (tcpsocket &s)
+void SocketWorker::handle (tcpsocket &s)
 {
 	bool shouldrun = true;
 	
@@ -483,25 +483,25 @@ void socketWorker::handle (tcpsocket &s)
 }
 
 // ==========================================================================
-// CONSTRUCTOR socketGroup
+// CONSTRUCTOR SocketGroup
 // ==========================================================================
-socketGroup::socketGroup (void)
+SocketGroup::SocketGroup (void)
 {
 	shouldShutdown = false;
 }
 
 // ==========================================================================
-// DESTRUCTOR socketGroup
+// DESTRUCTOR SocketGroup
 // ==========================================================================
-socketGroup::~socketGroup (void)
+SocketGroup::~SocketGroup (void)
 {
 	//listenSock.o.close();
 }
 
 // ==========================================================================
-// METHOD socketGroup::listenTo
+// METHOD SocketGroup::listenTo
 // ==========================================================================
-void socketGroup::listenTo (const string &inpath)
+void SocketGroup::listenTo (const string &inpath)
 {
 	exclusivesection (listenSock)
 	{
@@ -510,9 +510,9 @@ void socketGroup::listenTo (const string &inpath)
 }
 
 // ==========================================================================
-// METHOD socketGroup::accept
+// METHOD SocketGroup::accept
 // ==========================================================================
-tcpsocket *socketGroup::accept (void)
+tcpsocket *SocketGroup::accept (void)
 {
 	tcpsocket *res = NULL;
 	if (shouldShutdown) return NULL;
@@ -524,7 +524,7 @@ tcpsocket *socketGroup::accept (void)
 	return res;
 }
 
-void socketGroup::shutdown (void)
+void SocketGroup::shutdown (void)
 {
 	shouldShutdown = false;
 	broadcastevent ("exit");
@@ -537,17 +537,17 @@ void socketGroup::shutdown (void)
 }
 
 // ==========================================================================
-// CONSTRUCTOR commandHandler
+// CONSTRUCTOR CommandHandler
 // ==========================================================================
-commandHandler::commandHandler (void)
+CommandHandler::CommandHandler (void)
 {
 	transactionid = strutil::uuid ();
 }
 
 // ==========================================================================
-// DESTRUCTOR commandHandler
+// DESTRUCTOR CommandHandler
 // ==========================================================================
-commandHandler::~commandHandler (void)
+CommandHandler::~CommandHandler (void)
 {
 	if (module && transactionid)
 	{
@@ -559,9 +559,9 @@ commandHandler::~commandHandler (void)
 }
 
 // ==========================================================================
-// METHOD commandHandler::runScript
+// METHOD CommandHandler::runScript
 // ==========================================================================
-bool commandHandler::runScriptExt (const string &scriptName,
+bool CommandHandler::runScriptExt (const string &scriptName,
 								const value &arguments,
 								const string &asUser)
 {
@@ -576,9 +576,9 @@ bool commandHandler::runScriptExt (const string &scriptName,
 }
 
 // ==========================================================================
-// METHOD commandHandler::runScript
+// METHOD CommandHandler::runScript
 // ==========================================================================
-bool commandHandler::runScript (const string &scriptName,
+bool CommandHandler::runScript (const string &scriptName,
 								const value &arguments,
 								const string &asUser)
 {
@@ -661,7 +661,7 @@ bool commandHandler::runScript (const string &scriptName,
 	return true;
 }
 
-bool commandHandler::installUserFile (const string &fname, const string &dpath,
+bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 									  const string &user)
 {
 	AUTHD->log (log::info, "handler", "installUserFile (%s,%s,%s)"
@@ -735,9 +735,9 @@ bool commandHandler::installUserFile (const string &fname, const string &dpath,
 }
 
 // ==========================================================================
-// METHOD commandHandler::installFile
+// METHOD CommandHandler::installFile
 // ==========================================================================
-bool commandHandler::installFile (const string &fname, const string &_dpath,
+bool CommandHandler::installFile (const string &fname, const string &_dpath,
 								  uid_t destuid, gid_t destgid)
 {
 	string tfname;
@@ -831,9 +831,9 @@ bool commandHandler::installFile (const string &fname, const string &_dpath,
 }
 
 // ==========================================================================
-// METHOD commandHandler::makeDir
+// METHOD CommandHandler::makeDir
 // ==========================================================================
-bool commandHandler::makeDir (const string &_dpath)
+bool CommandHandler::makeDir (const string &_dpath)
 {
 	string tdname;
 	value perms;
@@ -916,7 +916,7 @@ bool commandHandler::makeDir (const string &_dpath)
 	return true;
 }
 
-bool commandHandler::makeUserDir (const string &dpath,
+bool CommandHandler::makeUserDir (const string &dpath,
 								  const string &user,
 								  const string &modestr)
 {
@@ -1018,9 +1018,9 @@ bool commandHandler::makeUserDir (const string &dpath,
 }
 
 // ==========================================================================
-// METHOD commandHandler::getObject
+// METHOD CommandHandler::getObject
 // ==========================================================================
-bool commandHandler::getObject (const string &objname, file &out)
+bool CommandHandler::getObject (const string &objname, file &out)
 {
 	string fname;
 	string err;
@@ -1051,9 +1051,9 @@ bool commandHandler::getObject (const string &objname, file &out)
 }
 
 // ==========================================================================
-// METHOD commandHandler::deleteDir
+// METHOD CommandHandler::deleteDir
 // ==========================================================================
-bool commandHandler::deleteDir (const string &_dpath)
+bool CommandHandler::deleteDir (const string &_dpath)
 {
 	string tdname;
 	value perms;
@@ -1111,7 +1111,7 @@ bool commandHandler::deleteDir (const string &_dpath)
 	return runScript ("remove-directory", args);
 }
 
-void commandHandler::finishTransaction (void)
+void CommandHandler::finishTransaction (void)
 {
 	if (! transactionid) return;
 	
@@ -1126,7 +1126,7 @@ void commandHandler::finishTransaction (void)
 	transactionid = nokey;
 }
 
-bool commandHandler::rollbackTransaction (void)
+bool CommandHandler::rollbackTransaction (void)
 {
 	if (! transactionid) return false;
 	
@@ -1140,9 +1140,9 @@ bool commandHandler::rollbackTransaction (void)
 }
 
 // ==========================================================================
-// METHOD commandHandler::deleteFile
+// METHOD CommandHandler::deleteFile
 // ==========================================================================
-bool commandHandler::deleteFile (const string &path)
+bool CommandHandler::deleteFile (const string &path)
 {
 	AUTHD->log (log::info, "handler ", "Delete file module=<%S> id=<%S> "
 				"path=<%S>", module.str(), transactionid.str(), path.str());
@@ -1165,9 +1165,9 @@ bool commandHandler::deleteFile (const string &path)
 }
 
 // ==========================================================================
-// METHOD commandHandler::createUser
+// METHOD CommandHandler::createUser
 // ==========================================================================
-bool commandHandler::createUser (const string &userName, const string &ppass)
+bool CommandHandler::createUser (const string &userName, const string &ppass)
 {
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -1207,9 +1207,9 @@ bool commandHandler::createUser (const string &userName, const string &ppass)
 }
 
 // ==========================================================================
-// METHOD commandHandler::deleteUser
+// METHOD CommandHandler::deleteUser
 // ==========================================================================
-bool commandHandler::deleteUser (const string &userName)
+bool CommandHandler::deleteUser (const string &userName)
 {
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -1238,9 +1238,9 @@ bool commandHandler::deleteUser (const string &userName)
 }
 
 // ==========================================================================
-// METHOD commandHandler::setUserShell
+// METHOD CommandHandler::setUserShell
 // ==========================================================================
-bool commandHandler::setUserShell (	const string &userName,
+bool CommandHandler::setUserShell (	const string &userName,
 							   		const string &shell)
 {
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
@@ -1271,9 +1271,9 @@ bool commandHandler::setUserShell (	const string &userName,
 }
 
 // ==========================================================================
-// METHOD commandHandler::setUserShell
+// METHOD CommandHandler::setUserShell
 // ==========================================================================
-bool commandHandler::setUserPass (	const string &userName,
+bool CommandHandler::setUserPass (	const string &userName,
 							   		const string &password)
 {
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
@@ -1304,9 +1304,9 @@ bool commandHandler::setUserPass (	const string &userName,
 }
 
 // ==========================================================================
-// METHOD commandHandler::setQuota
+// METHOD CommandHandler::setQuota
 // ==========================================================================
-bool commandHandler::setQuota (const string &userName,
+bool CommandHandler::setQuota (const string &userName,
 							   unsigned int softLimit,
 							   unsigned int hardLimit)
 {
@@ -1340,9 +1340,9 @@ bool commandHandler::setQuota (const string &userName,
 }
 
 // ==========================================================================
-// METHOD pathguard::checkServiceAccess
+// METHOD PathGuard::checkServiceAccess
 // ==========================================================================
-bool pathguard::checkServiceAccess (const string &moduleName,
+bool PathGuard::checkServiceAccess (const string &moduleName,
 									const string &serviceName,
 									string &error)
 {
@@ -1366,9 +1366,9 @@ bool pathguard::checkServiceAccess (const string &moduleName,
 }
 
 // ==========================================================================
-// METHOD pathguard::checkScriptAccess
+// METHOD PathGuard::checkScriptAccess
 // ==========================================================================
-bool pathguard::checkScriptAccess (const string &moduleName,
+bool PathGuard::checkScriptAccess (const string &moduleName,
 								   const string &scriptName,
 								   string &userName,
 								   string &error)
@@ -1419,9 +1419,9 @@ bool pathguard::checkScriptAccess (const string &moduleName,
 }
 
 // ==========================================================================
-// METHOD pathguard::checkCommandAccess
+// METHOD PathGuard::checkCommandAccess
 // ==========================================================================
-bool pathguard::checkCommandAccess (const string &moduleName,
+bool PathGuard::checkCommandAccess (const string &moduleName,
 								    const string &cmdName,
 								    const string &cmdClass,
 								    string &error)
@@ -1454,9 +1454,9 @@ bool pathguard::checkCommandAccess (const string &moduleName,
 }
 
 // ==========================================================================
-// METHOD commandHandler::startService
+// METHOD CommandHandler::startService
 // ==========================================================================
-bool commandHandler::startService (const string &serviceName)
+bool CommandHandler::startService (const string &serviceName)
 {
 	AUTHD->log (log::info, "handler ", "Start service module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(),
@@ -1476,9 +1476,9 @@ bool commandHandler::startService (const string &serviceName)
 }
 
 // ==========================================================================
-// METHOD commandHandler::stopService
+// METHOD CommandHandler::stopService
 // ==========================================================================
-bool commandHandler::stopService (const string &serviceName)
+bool CommandHandler::stopService (const string &serviceName)
 {
 	AUTHD->log (log::info, "handler ", "Stop service module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(),
@@ -1498,9 +1498,9 @@ bool commandHandler::stopService (const string &serviceName)
 }
 
 // ==========================================================================
-// METHOD commandHandler::reloadService
+// METHOD CommandHandler::reloadService
 // ==========================================================================
-bool commandHandler::reloadService (const string &serviceName)
+bool CommandHandler::reloadService (const string &serviceName)
 {
 	AUTHD->log (log::info, "handler ", "Reload service module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(),
@@ -1520,9 +1520,9 @@ bool commandHandler::reloadService (const string &serviceName)
 }
 
 // ==========================================================================
-// METHOD commandHandler::setServiceOnBoot
+// METHOD CommandHandler::setServiceOnBoot
 // ==========================================================================
-bool commandHandler::setServiceOnBoot (const string &serviceName,
+bool CommandHandler::setServiceOnBoot (const string &serviceName,
 									   bool onBoot)
 {
 	AUTHD->log (log::info, "handler ", "Service onboot module=<%S> id=<%S> "
@@ -1543,9 +1543,9 @@ bool commandHandler::setServiceOnBoot (const string &serviceName,
 }
 
 // ==========================================================================
-// METHOD commandHandler::setServiceOnBoot
+// METHOD CommandHandler::setServiceOnBoot
 // ==========================================================================
-void commandHandler::setModule (const string &moduleName)
+void CommandHandler::setModule (const string &moduleName)
 {
 	module = moduleName;
 	transactionid = strutil::uuid();
@@ -1555,9 +1555,9 @@ void commandHandler::setModule (const string &moduleName)
 }
 
 // ==========================================================================
-// METHOD commandHandler::triggerSoftwareUpdate
+// METHOD CommandHandler::triggerSoftwareUpdate
 // ==========================================================================
-bool commandHandler::triggerSoftwareUpdate (void)
+bool CommandHandler::triggerSoftwareUpdate (void)
 {
 	tcpsocket s;
 	
@@ -1597,23 +1597,23 @@ bool commandHandler::triggerSoftwareUpdate (void)
 }
 
 // ==========================================================================
-// CONSTRUCTOR metacache
+// CONSTRUCTOR MetaCache
 // ==========================================================================
-metacache::metacache (void)
+MetaCache::MetaCache (void)
 {
 }
 
 // ==========================================================================
-// DESTRUCTOR metacache
+// DESTRUCTOR MetaCache
 // ==========================================================================
-metacache::~metacache (void)
+MetaCache::~MetaCache (void)
 {
 }
 
 // ==========================================================================
-// METHOD metacache::get
+// METHOD MetaCache::get
 // ==========================================================================
-value *metacache::get (const statstring &moduleName)
+value *MetaCache::get (const statstring &moduleName)
 {
 	static string AlphaNumeric ("abcdefghijklmnopqrstuvwxyz"
 								"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -1660,23 +1660,23 @@ value *metacache::get (const statstring &moduleName)
 }
 
 // ==========================================================================
-// CONSTRUCTOR pathguard
+// CONSTRUCTOR PathGuard
 // ==========================================================================
-pathguard::pathguard (void) : cache (MCache)
+PathGuard::PathGuard (void) : cache (MCache)
 {
 }
 
 // ==========================================================================
-// DESTRUCTOR pathguard
+// DESTRUCTOR PathGuard
 // ==========================================================================
-pathguard::~pathguard (void)
+PathGuard::~PathGuard (void)
 {
 }
 
 // ==========================================================================
-// METHOD pathguard::translateSource
+// METHOD PathGuard::translateSource
 // ==========================================================================
-string *pathguard::translateSource (const statstring &moduleName,
+string *PathGuard::translateSource (const statstring &moduleName,
 								   const string &fileName,
 								   string &error)
 {
@@ -1765,9 +1765,9 @@ string *pathguard::translateSource (const statstring &moduleName,
 }
 
 // ==========================================================================
-// METHOD pathguard::checkDestination
+// METHOD PathGuard::checkDestination
 // ==========================================================================
-bool pathguard::checkDestination (const statstring &moduleName,
+bool PathGuard::checkDestination (const statstring &moduleName,
 								  const string &sourceFile,
 								  const string &filePath,
 								  value &perms,
@@ -1818,9 +1818,9 @@ bool pathguard::checkDestination (const statstring &moduleName,
 }
 
 // ==========================================================================
-// METHOD pathguard::translateDestination
+// METHOD PathGuard::translateDestination
 // ==========================================================================
-string *pathguard::translateDestination (const string &filePath,
+string *PathGuard::translateDestination (const string &filePath,
 								         const string &sourceFile)
 {
 	returnclass (string) res retain;
@@ -1834,9 +1834,9 @@ string *pathguard::translateDestination (const string &filePath,
 }
 
 // ==========================================================================
-// METHOD pathguard::translateObject
+// METHOD PathGuard::translateObject
 // ==========================================================================
-string *pathguard::translateObject (const statstring &moduleName,
+string *PathGuard::translateObject (const statstring &moduleName,
 									const string &name, string &error)
 {
 	returnclass (string) res retain;
@@ -1859,9 +1859,9 @@ string *pathguard::translateObject (const statstring &moduleName,
 }
 
 // ==========================================================================
-// METHOD pathguard::checkDelete
+// METHOD PathGuard::checkDelete
 // ==========================================================================
-bool pathguard::checkDelete (const statstring &moduleName,
+bool PathGuard::checkDelete (const statstring &moduleName,
 							 const string &fullPath,
 							 string &error)
 {
