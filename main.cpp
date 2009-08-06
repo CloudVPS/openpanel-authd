@@ -604,7 +604,7 @@ bool CommandHandler::runScript (const string &scriptName,
 											   scriptName, arguments.count()));
 	
 	// Fill in the fully qualified path to the script.
-	scriptPath.printf ("/var/opencore/tools/%s", scriptName.str());
+	scriptPath = "/var/opencore/tools/%s" %format (scriptName);
 	
 	// Croak if the script doesn't exist.
 	if (! fs.exists (scriptPath))
