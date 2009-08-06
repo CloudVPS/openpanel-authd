@@ -119,7 +119,7 @@ int AuthdApp::main (void)
 /// Configuration watcher for the event log.
 //  =========================================================================
 bool AuthdApp::confLog (config::action act, keypath &kp,
-							  const value &nval, const value &oval)
+						const value &nval, const value &oval)
 {
 	string tstr;
 	
@@ -184,12 +184,12 @@ void SocketWorker::run (void)
 			caseselector (ev.type())
 			{
 				incaseof ("exit") :
-					AUTHD->log (log::info, "worker", "Shutting down on "
+					log::write (log::info, "worker", "Shutting down on "
 								"request");
 					return;
 				
 				defaultcase :
-					AUTHD->log (log::warning, "worker", "Received unknown "
+					log::write (log::warning, "worker", "Received unknown "
 								"event of type %S", ev.type().str());
 					break;
 			}
@@ -210,13 +210,13 @@ void SocketWorker::run (void)
 					{
 						s.writeln ("-SHUTDOWN");
 						s.close ();
-						AUTHD->log (log::info, "worker", "Shutting down on "
+						log::write (log::info, "worker", "Shutting down on "
 									"request");
 						return;
 					}
 					else if (ev)
 					{
-						AUTHD->log (log::error, "worker", "Unknown event "
+						log::write (log::error, "worker", "Unknown event "
 									"with type <%S>", ev.type().str());
 					}
 				}
@@ -225,14 +225,14 @@ void SocketWorker::run (void)
 				{
 					s.writeln ("-TIMEOUT");
 					s.close ();
-					AUTHD->log (log::error, "worker", "Timeout");
+					log::write (log::error, "worker", "Timeout");
 					break;
 				}
 			}
 			if (rounds > 30) continue;
 			if (line.strncmp ("hello ", 6))
 			{
-				AUTHD->log (log::warning, "worker  ", "Bogus greeting: %s" %format (line));
+				log::write (log::warning, "worker  ", "Bogus greeting: %s" %format (line));
 				s.writeln ("-WTF?");
 				s.close();
 				continue;
@@ -247,11 +247,13 @@ void SocketWorker::run (void)
 			
 			handle (s);
 			if (handler.transactionid)
+			{
 				handler.finishTransaction ();
+			}
 		}
 		catch (...)
 		{
-			AUTHD->log (log::error, "worker  ", "Connection closed, rolling "
+			log::write (log::error, "worker  ", "Connection closed, rolling "
 						"back actions");
 			if (handler.transactionid)
 				handler.rollbackTransaction ();
@@ -267,7 +269,7 @@ void SocketWorker::handle (tcpsocket &s)
 {
 	bool shouldrun = true;
 	
-	AUTHD->log (log::info, "worker  ", "Handling connection for module <%S>",
+	log::write (log::info, "worker  ", "Handling connection for module <%S>",
 				handler.module.str());
 	
 	// Keep on going as long as there's stuff to do.
@@ -291,14 +293,14 @@ void SocketWorker::handle (tcpsocket &s)
 				{
 					s.writeln ("-SHUTDOWN");
 					s.close ();
-					AUTHD->log (log::info, "worker", "Shutting down on "
+					log::write (log::info, "worker", "Shutting down on "
 								"request");
 					shouldShutdown = true;
 					return;
 				}
 				else if (ev)
 				{
-					AUTHD->log (log::error, "worker", "Unknown event "
+					log::write (log::error, "worker", "Unknown event "
 								"with type <%S>", ev.type().str());
 				}
 			}
@@ -307,7 +309,7 @@ void SocketWorker::handle (tcpsocket &s)
 		}
 		if (rounds > 30)
 		{
-			AUTHD->log (log::error, "worker  ", "Timeout on socket");
+			log::write (log::error, "worker  ", "Timeout on socket");
 			s.writeln ("-TIMEOUT");
 			throw (1);
 		}
@@ -325,7 +327,7 @@ void SocketWorker::handle (tcpsocket &s)
 			
 			cmd = strutil::splitquoted (line, ' ');
 			
-			AUTHD->log (log::info, "worker", "Command line: %s" %format (line));
+			log::write (log::info, "worker", "Command line: %s" %format (line));
 
 			caseselector (cmd[0])
 			{
@@ -446,7 +448,7 @@ void SocketWorker::handle (tcpsocket &s)
 					break;
 				
 				incaseof ("quit") :
-					AUTHD->log (log::info, "worker  ", "Exit on module request");
+					log::write (log::info, "worker  ", "Exit on module request");
 					cmdok = true;
 					shouldrun = false;
 					try
@@ -462,7 +464,7 @@ void SocketWorker::handle (tcpsocket &s)
 					break;
 			}
 			
-			AUTHD->log (log::info, "worker  ", "Module=<%S> command=<%S> "
+			log::write (log::info, "worker  ", "Module=<%S> command=<%S> "
 						"status=<%s>", handler.module.str(), cmd[0].str(),
 						cmdok ? "OK" : noerrordata ? "UNKNOWN" : "FAIL");
 			
@@ -475,7 +477,7 @@ void SocketWorker::handle (tcpsocket &s)
 					errorcode = handler.lasterrorcode;
 				}
 				s.printf ("-ERR:%i:%S\n", errorcode, errorstr.cval());
-				AUTHD->log (log::error, "worker", "Error %i: %S", errorcode,
+				log::write (log::error, "worker", "Error %i: %S", errorcode,
 							errorstr.cval());
 			}
 		}
@@ -597,7 +599,7 @@ bool CommandHandler::runScript (const string &scriptName,
 		return false;
 	}
 
-	AUTHD->log (log::info, "handler ", "Runscript module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Runscript module=<%S> id=<%S> "
 				"name=<%S> argc=<%i>", module.str(),
 				transactionid.str(), scriptName.str(), arguments.count());
 	
@@ -661,10 +663,13 @@ bool CommandHandler::runScript (const string &scriptName,
 	return true;
 }
 
+// ==========================================================================
+// METHOD CommandHandler::installUserFile
+// ==========================================================================
 bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 									  const string &user)
 {
-	AUTHD->log (log::info, "handler", "installUserFile (%s,%s,%s)"
+	log::write (log::info, "handler", "installUserFile (%s,%s,%s)"
 						%format (fname, dpath, user));
 	string pdpath = (dpath[0] == '/') ? dpath.mid(1) : dpath;
 	if (dpath.strstr ("..") >= 0)
@@ -672,7 +677,7 @@ bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 		lasterrorcode = ERR_POLICY;
 		lasterror = "Destination directory contains illegal characters";
 		
-		AUTHD->log (log::error, "handler", "Illegal characters in "
+		log::write (log::error, "handler", "Illegal characters in "
 					"makeuserdir argument");
 		return false;
 	}
@@ -690,7 +695,7 @@ bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 		lasterrorcode = ERR_NOT_FOUND;
 		lasterror = "The paneluser group was not found";
 		
-		AUTHD->log (log::error, "handler", "No paneluser group found");
+		log::write (log::error, "handler", "No paneluser group found");
 		return false;
 	}
 	
@@ -699,7 +704,7 @@ bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 	{
 		lasterrorcode = ERR_NOT_FOUND;
 		lasterror = "The user was not found";
-		AUTHD->log (log::error, "handler", "Unknown user <%S>", user.str());
+		log::write (log::error, "handler", "Unknown user <%S>", user.str());
 		return false;
 	}
 	
@@ -712,7 +717,7 @@ bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 		lasterrorcode = ERR_NOT_FOUND;
 		lasterror = "The user's primary group was not found";
 		
-		AUTHD->log (log::error, "handler", "Could not back-resolve gid #%u ",
+		log::write (log::error, "handler", "Could not back-resolve gid #%u ",
 					pw["gid"].uval());
 		return false;
 	}
@@ -722,7 +727,7 @@ bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 		lasterrorcode = ERR_POLICY;
 		lasterror = "The user is not a member of group paneluser";
 		
-		AUTHD->log (log::error, "handler", "User <%S> not a member of "
+		log::write (log::error, "handler", "User <%S> not a member of "
 					"group paneluser", user.str());
 		return false;
 	}
@@ -751,14 +756,14 @@ bool CommandHandler::installFile (const string &fname, const string &_dpath,
 		dpath.crop (dpath.strlen() - 1);
 	}
 	
-	AUTHD->log (log::info, "handler ", "Installfile module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Installfile module=<%S> id=<%S> "
 				"name=<%S> dpath=<%S>",
 				module.str(), transactionid.str(), fname.str(), dpath.str());
 	
 	tfname = guard.translateSource (module, fname, guarderr);
 	if (! tfname)
 	{
-		AUTHD->log (log::info, "handler ", "Source policy fail: %s",
+		log::write (log::info, "handler ", "Source policy fail: %s",
 					guarderr.str());
 		lasterrorcode = ERR_POLICY;
 		lasterror = "Source file name does not match policy: ";
@@ -768,7 +773,7 @@ bool CommandHandler::installFile (const string &fname, const string &_dpath,
 	
 	if (! guard.checkDestination (module, fname, dpath, perms, guarderr))
 	{
-		AUTHD->log (log::info, "handler ", "Dest policy fail: %s",
+		log::write (log::info, "handler ", "Dest policy fail: %s",
 					guarderr.str());
 		lasterrorcode = ERR_POLICY;
 		lasterror = "Destination file name does not match policy: ";
@@ -800,7 +805,7 @@ bool CommandHandler::installFile (const string &fname, const string &_dpath,
 		}
 		else
 		{
-			AUTHD->log (log::error, "handler ", "Cannot find group %s",
+			log::write (log::error, "handler ", "Cannot find group %s",
 						perms["group"].cval());
 			lasterrorcode = ERR_NOT_FOUND;
 			lasterror = "Unknown group: ";
@@ -845,13 +850,13 @@ bool CommandHandler::makeDir (const string &_dpath)
 		dpath.crop (dpath.strlen() - 1);
 	}
 	
-	AUTHD->log (log::info, "handler ", "Makedir module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Makedir module=<%S> id=<%S> "
 				"dpath=<%S>",
 				module.str(), transactionid.str(), dpath.str());
 	
 	if (! guard.checkDestination (module, "", dpath, perms, guarderr))
 	{
-		AUTHD->log (log::info, "handler ", "Dest policy fail: %s",
+		log::write (log::info, "handler ", "Dest policy fail: %s",
 					guarderr.str());
 		lasterrorcode = ERR_POLICY;
 		lasterror = "Destination directory does not match policy: ";
@@ -880,7 +885,7 @@ bool CommandHandler::makeDir (const string &_dpath)
 		}
 		else
 		{
-			AUTHD->log (log::error, "handler ", "Cannot find group %s",
+			log::write (log::error, "handler ", "Cannot find group %s",
 						perms["group"].cval());
 			lasterrorcode = ERR_NOT_FOUND;
 			lasterror = "Unknown group: ";
@@ -898,17 +903,17 @@ bool CommandHandler::makeDir (const string &_dpath)
 	
 	if (fs.isdir (dpath))
 	{
-		AUTHD->log (log::warning, "handler", "Directory <%s> already "
+		log::write (log::warning, "handler", "Directory <%s> already "
 					"existed when trying to create", dpath.str());
 	}
 	else if (!fs.mkdir (dpath))
 	{
-		AUTHD->log (log::error, "handler", "Cannot create dir <%s>",
+		log::write (log::error, "handler", "Cannot create dir <%s>",
 					dpath.str());
 		return false;
 	}
 
-	AUTHD->log (log::info, "handler", "Setting up perms: %s/%s %o",
+	log::write (log::info, "handler", "Setting up perms: %s/%s %o",
 				fuser.str(), fgroup.str(), mode);
 	fs.chown (dpath, fuser, fgroup);
 	fs.chmod (dpath, mode);
@@ -916,6 +921,9 @@ bool CommandHandler::makeDir (const string &_dpath)
 	return true;
 }
 
+// ==========================================================================
+// METHOD CommandHandler::makeUserDir
+// ==========================================================================
 bool CommandHandler::makeUserDir (const string &dpath,
 								  const string &user,
 								  const string &modestr)
@@ -927,7 +935,7 @@ bool CommandHandler::makeUserDir (const string &dpath,
 		lasterrorcode = ERR_POLICY;
 		lasterror = "Destination directory contains illegal characters";
 		
-		AUTHD->log (log::error, "handler", "Illegal characters in "
+		log::write (log::error, "handler", "Illegal characters in "
 					"makeuserdir argument");
 		return false;
 	}
@@ -945,7 +953,7 @@ bool CommandHandler::makeUserDir (const string &dpath,
 		lasterrorcode = ERR_NOT_FOUND;
 		lasterror = "The paneluser group was not found";
 		
-		AUTHD->log (log::error, "handler", "No paneluser group found");
+		log::write (log::error, "handler", "No paneluser group found");
 		return false;
 	}
 	
@@ -954,7 +962,7 @@ bool CommandHandler::makeUserDir (const string &dpath,
 	{
 		lasterrorcode = ERR_NOT_FOUND;
 		lasterror = "The user was not found";
-		AUTHD->log (log::error, "handler", "Unknown user <%S>", user.str());
+		log::write (log::error, "handler", "Unknown user <%S>", user.str());
 		return false;
 	}
 	
@@ -967,7 +975,7 @@ bool CommandHandler::makeUserDir (const string &dpath,
 		lasterrorcode = ERR_NOT_FOUND;
 		lasterror = "The user's primary group was not found";
 		
-		AUTHD->log (log::error, "handler", "Could not back-resolve gid #%u ",
+		log::write (log::error, "handler", "Could not back-resolve gid #%u ",
 					pw["gid"].uval());
 		return false;
 	}
@@ -977,7 +985,7 @@ bool CommandHandler::makeUserDir (const string &dpath,
 		lasterrorcode = ERR_POLICY;
 		lasterror = "The user is not a member of group paneluser";
 		
-		AUTHD->log (log::error, "handler", "User <%S> not a member of "
+		log::write (log::error, "handler", "User <%S> not a member of "
 					"group paneluser", user.str());
 		return false;
 	}
@@ -1005,7 +1013,7 @@ bool CommandHandler::makeUserDir (const string &dpath,
 			{
 				lasterror = "Could not create directory";
 				
-				AUTHD->log (log::error, "handler", "Error creating "
+				log::write (log::error, "handler", "Error creating "
 							"directory <%S> for user <%S>"
 							%format (tpath,user));
 				return false;
@@ -1028,7 +1036,7 @@ bool CommandHandler::getObject (const string &objname, file &out)
 	fname = guard.translateObject (module, objname, err);
 	if (! fname)
 	{
-		AUTHD->log (log::error, "handler", "Cannot find object <%S>: %s",
+		log::write (log::error, "handler", "Cannot find object <%S>: %s",
 					objname.str(), err.str());
 		lasterrorcode = ERR_POLICY;
 		lasterror = "Object not defined";
@@ -1065,13 +1073,13 @@ bool CommandHandler::deleteDir (const string &_dpath)
 		dpath.crop (dpath.strlen() - 1);
 	}
 	
-	AUTHD->log (log::info, "handler ", "Deletedir module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Deletedir module=<%S> id=<%S> "
 				"dpath=<%S>",
 				module.str(), transactionid.str(), dpath.str());
 	
 	if (! guard.checkDestination (module, "", dpath, perms, guarderr))
 	{
-		AUTHD->log (log::info, "handler ", "Dest policy fail: %s",
+		log::write (log::info, "handler ", "Dest policy fail: %s",
 					guarderr.str());
 		lasterrorcode = ERR_POLICY;
 		lasterror = "Destination directory does not match policy: ";
@@ -1084,7 +1092,7 @@ bool CommandHandler::deleteDir (const string &_dpath)
 	{
 		if (perms["user"] != inf["user"])
 		{
-			AUTHD->log (log::error, "handler", "Directory <%S> does not match "
+			log::write (log::error, "handler", "Directory <%S> does not match "
 						"ownership policies", dpath.str());
 			lasterrorcode = ERR_POLICY;
 			lasterror = "Destination directory ownership mismatch";
@@ -1095,7 +1103,7 @@ bool CommandHandler::deleteDir (const string &_dpath)
 	{
 		if (perms["group"] != inf["group"])
 		{
-			AUTHD->log (log::error, "handler", "Directory <%S> does not match "
+			log::write (log::error, "handler", "Directory <%S> does not match "
 						"ownership policies", dpath.str());
 			lasterrorcode = ERR_POLICY;
 			lasterror = "Destination directory ownership mismatch";
@@ -1111,6 +1119,9 @@ bool CommandHandler::deleteDir (const string &_dpath)
 	return runScript ("remove-directory", args);
 }
 
+// ==========================================================================
+// METHOD CommandHandler::finishTransaction
+// ==========================================================================
 void CommandHandler::finishTransaction (void)
 {
 	if (! transactionid) return;
@@ -1120,12 +1131,15 @@ void CommandHandler::finishTransaction (void)
 	
 	runScript ("end-transaction", args);
 	
-	AUTHD->log (log::info, "handler ", "Closing transaction module=<%S> "
+	log::write (log::info, "handler ", "Closing transaction module=<%S> "
 			"id=<%S>", module.str(), transactionid.str());
 
 	transactionid = nokey;
 }
 
+// ==========================================================================
+// METHOD CommandHandler::rollbackTransaction
+// ==========================================================================
 bool CommandHandler::rollbackTransaction (void)
 {
 	if (! transactionid) return false;
@@ -1133,7 +1147,7 @@ bool CommandHandler::rollbackTransaction (void)
 	value args;
 	args.newval() = transactionid;
 
-	AUTHD->log (log::info, "handler ", "Rolling back transaction module=<%S> "
+	log::write (log::info, "handler ", "Rolling back transaction module=<%S> "
 				"id=<%S>", module.str(), transactionid.str());
 
 	return runScript ("rollback-transaction", args);
@@ -1144,7 +1158,7 @@ bool CommandHandler::rollbackTransaction (void)
 // ==========================================================================
 bool CommandHandler::deleteFile (const string &path)
 {
-	AUTHD->log (log::info, "handler ", "Delete file module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Delete file module=<%S> id=<%S> "
 				"path=<%S>", module.str(), transactionid.str(), path.str());
 	
 	string guarderr;
@@ -1175,7 +1189,7 @@ bool CommandHandler::createUser (const string &userName, const string &ppass)
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()+="
 							 "<>,./?;:'|{}[]-_`~ ");
 	
-	AUTHD->log (log::info, "handler ", "Create user module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Create user module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(), userName.str());
 	
 	if (! guard.checkCommandAccess(module, "createuser","user", lasterror))
@@ -1214,7 +1228,7 @@ bool CommandHandler::deleteUser (const string &userName)
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	AUTHD->log (log::info, "handler ", "Delete user module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Delete user module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(), userName.str());
 	
 	if (! guard.checkCommandAccess(module, "deleteuser","user", lasterror))
@@ -1246,7 +1260,7 @@ bool CommandHandler::setUserShell (	const string &userName,
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	AUTHD->log (log::info, "handler ", "Set User's Shell module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Set User's Shell module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(), userName.str());
 	
 	if (! guard.checkCommandAccess(module, "setusershell", "user", lasterror))
@@ -1279,7 +1293,7 @@ bool CommandHandler::setUserPass (	const string &userName,
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	AUTHD->log (log::info, "handler ", "Set User's Shell module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Set User's Shell module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(), userName.str());
 	
 	if (! guard.checkCommandAccess(module, "setuserpass", "user", lasterror))
@@ -1313,7 +1327,7 @@ bool CommandHandler::setQuota (const string &userName,
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	AUTHD->log (log::info, "handler ", "Set User's quota module=<%S> id=<%S> user=<%S> "
+	log::write (log::info, "handler ", "Set User's quota module=<%S> id=<%S> user=<%S> "
 				"soft/hard=<%d/%d>", module.str(), transactionid.str(), userName.str(),
 				softLimit, hardLimit);
 	
@@ -1351,7 +1365,7 @@ bool PathGuard::checkServiceAccess (const string &moduleName,
 	if (! meta)
 	{
 		error = "Could not find module";
-		AUTHD->log (log::error, "srvaccs", "Could not load module <%S>",
+		log::write (log::error, "srvaccs", "Could not load module <%S>",
 					moduleName.str());
 		return false;
 	}
@@ -1375,21 +1389,21 @@ bool PathGuard::checkScriptAccess (const string &moduleName,
 {
 	value meta;
 	
-	AUTHD->log (log::info, "scraccs ", "Checking script access module=<%S> "
+	log::write (log::info, "scraccs ", "Checking script access module=<%S> "
 				"script=<%S>", moduleName.str(), scriptName.str());
 				
 	meta = cache.get (moduleName);
 	if (! meta)
 	{
 		error = "Could not find module";
-		AUTHD->log (log::error, "scraccs", "Could not load module <%S>",
+		log::write (log::error, "scraccs", "Could not load module <%S>",
 					moduleName.str());
 		return false;
 	}
 	
 	if (! meta["authdops"]["scripts"].exists(scriptName))
 	{
-		AUTHD->log (log::error, "scraccs", "Script not defined in module.xml: <%S>",
+		log::write (log::error, "scraccs", "Script not defined in module.xml: <%S>",
 					scriptName.str());
 		error = "Script not defined in module.xml";
 		return false;
@@ -1400,7 +1414,7 @@ bool PathGuard::checkScriptAccess (const string &moduleName,
 	{
 		if ((scrip("asroot") == false) && (userName == "root"))
 		{
-			AUTHD->log (log::error, "scraccs", "Script <%S> may not be run as "
+			log::write (log::error, "scraccs", "Script <%S> may not be run as "
 						"root as per the module.xml for <%S>",
 						scriptName.str(), moduleName.str());
 		}
@@ -1411,7 +1425,7 @@ bool PathGuard::checkScriptAccess (const string &moduleName,
 		userName = scrip("asuser");
 	}
 
-	AUTHD->log (log::info, "scraccs ", "Allowing script access module=<%S> "
+	log::write (log::info, "scraccs ", "Allowing script access module=<%S> "
 				"script=<%S> user=<%S>", moduleName.str(), scriptName.str(),
 				userName.str());
 	
@@ -1428,14 +1442,14 @@ bool PathGuard::checkCommandAccess (const string &moduleName,
 {
 	value meta;
 	
-	AUTHD->log (log::info, "cmdaccs ", "Checking command access module=<%S> "
+	log::write (log::info, "cmdaccs ", "Checking command access module=<%S> "
 				"command=<%S> commandclass=<%S>", moduleName.str(), cmdName.str(), cmdClass.str());
 				
 	meta = cache.get (moduleName);
 	if (! meta)
 	{
 		error = "Could not find module";
-		AUTHD->log (log::error, "cmdaccs", "Could not load module <%S>",
+		log::write (log::error, "cmdaccs", "Could not load module <%S>",
 					moduleName.str());
 		return false;
 	}
@@ -1443,12 +1457,12 @@ bool PathGuard::checkCommandAccess (const string &moduleName,
 	if (! meta["authdops"]["commands"].exists(cmdName)
 	&&  ! meta["authdops"]["commandclasses"].exists(cmdClass))
 	{
-		AUTHD->log (log::error, "cmdaccs", "Command or command class not defined in module.xml");
+		log::write (log::error, "cmdaccs", "Command or command class not defined in module.xml");
 		error = "Command or command class not defined in module.xml";
 		return false;
 	}
 		
-	AUTHD->log (log::info, "cmdaccs ", "Allowing command access module=<%S> ", moduleName.str());
+	log::write (log::info, "cmdaccs ", "Allowing command access module=<%S> ", moduleName.str());
 	
 	return true;
 }
@@ -1458,7 +1472,7 @@ bool PathGuard::checkCommandAccess (const string &moduleName,
 // ==========================================================================
 bool CommandHandler::startService (const string &serviceName)
 {
-	AUTHD->log (log::info, "handler ", "Start service module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Start service module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(),
 				serviceName.str());
 	
@@ -1480,7 +1494,7 @@ bool CommandHandler::startService (const string &serviceName)
 // ==========================================================================
 bool CommandHandler::stopService (const string &serviceName)
 {
-	AUTHD->log (log::info, "handler ", "Stop service module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Stop service module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(),
 				serviceName.str());
 	
@@ -1502,7 +1516,7 @@ bool CommandHandler::stopService (const string &serviceName)
 // ==========================================================================
 bool CommandHandler::reloadService (const string &serviceName)
 {
-	AUTHD->log (log::info, "handler ", "Reload service module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Reload service module=<%S> id=<%S> "
 				"name=<%S>", module.str(), transactionid.str(),
 				serviceName.str());
 	
@@ -1525,7 +1539,7 @@ bool CommandHandler::reloadService (const string &serviceName)
 bool CommandHandler::setServiceOnBoot (const string &serviceName,
 									   bool onBoot)
 {
-	AUTHD->log (log::info, "handler ", "Service onboot module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Service onboot module=<%S> id=<%S> "
 				"name=<%S> status=<%s>", module.str(), transactionid.str(),
 				serviceName.str(), onBoot ? "on" : "off");
 	
@@ -1550,7 +1564,7 @@ void CommandHandler::setModule (const string &moduleName)
 	module = moduleName;
 	transactionid = strutil::uuid();
 	
-	AUTHD->log (log::info, "handler ", "Started transaction module=<%S> "
+	log::write (log::info, "handler ", "Started transaction module=<%S> "
 				"id=<%S>", module.str(), transactionid.str());
 }
 
@@ -1570,7 +1584,7 @@ bool CommandHandler::triggerSoftwareUpdate (void)
 	
 	if (! s.uconnect (PATH_SWUPD_SOCKET))
 	{
-		AUTHD->log (log::error, "handler", "Could not connect to swupd "
+		log::write (log::error, "handler", "Could not connect to swupd "
 					"socket");
 		return false;
 	}
@@ -1582,7 +1596,7 @@ bool CommandHandler::triggerSoftwareUpdate (void)
 		s.close ();
 		if (line[0] == '+')
 		{
-			AUTHD->log (log::info, "handler", "Triggered software "
+			log::write (log::info, "handler", "Triggered software "
 						"update");
 			return true;
 		}
@@ -1592,7 +1606,7 @@ bool CommandHandler::triggerSoftwareUpdate (void)
 	}
 	
 	s.close ();
-	AUTHD->log (log::error, "handler", "Error from swupd");
+	log::write (log::error, "handler", "Error from swupd");
 	return false;
 }
 
@@ -1702,7 +1716,7 @@ string *PathGuard::translateSource (const statstring &moduleName,
 	if (! meta)
 	{
 		error = "Could not find module";
-		AUTHD->log (log::error, "pathgrd ", "Could not load module <%S>",
+		log::write (log::error, "pathgrd ", "Could not load module <%S>",
 					moduleName.str());
 		return NULL;
 	}
@@ -1728,7 +1742,7 @@ string *PathGuard::translateSource (const statstring &moduleName,
 				finf = fs.getinfo (res);
 				if (finf["user"] != "opencore")
 				{
-					AUTHD->log (log::error, "pathgrd ", "Owner mismatch "
+					log::write (log::error, "pathgrd ", "Owner mismatch "
 								"on file <%S>: %s", fileName.str(),
 								finf["user"].cval());
 					error = "File owner mismatch (not opencore)";
@@ -1736,7 +1750,7 @@ string *PathGuard::translateSource (const statstring &moduleName,
 				}
 				else if (finf["group"] != "opencore")
 				{
-					AUTHD->log (log::error, "pathgrd ", "Group mismatch "
+					log::write (log::error, "pathgrd ", "Group mismatch "
 								"on file <%S>: %s", fileName.str(),
 								finf["group"].cval());
 					error = "File group mismatch (not opencore)";
@@ -1747,7 +1761,7 @@ string *PathGuard::translateSource (const statstring &moduleName,
 					perms = finf["mode"].uval();
 					if (perms & 1)
 					{
-						AUTHD->log (log::error, "pathgrd ", "Denied "
+						log::write (log::error, "pathgrd ", "Denied "
 									"world-writable file <%S>",
 									fileName.str());
 						error = "File is world-writable";
@@ -1810,7 +1824,7 @@ bool PathGuard::checkDestination (const statstring &moduleName,
 	}
 	
 	error = "No matching destination path found in fileop";
-	AUTHD->log (log::warning, "pathgrd ", "Denied module=<%S> "
+	log::write (log::warning, "pathgrd ", "Denied module=<%S> "
 				"file=<%S> destpath=<%S>", moduleName.str(), sourceFile.str(),
 				filePath.str());
 	
@@ -1884,7 +1898,7 @@ bool PathGuard::checkDelete (const statstring &moduleName,
 	}
 	
 	error = "No matching destination path found in any fileop for the module";
-	AUTHD->log (log::warning, "pathgrd ", "Denied delete module=<%S> "
+	log::write (log::warning, "pathgrd ", "Denied delete module=<%S> "
 				"file=<%S>", moduleName.str(), fullPath.str());
 	
 	return false;
