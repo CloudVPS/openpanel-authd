@@ -1109,11 +1109,7 @@ bool CommandHandler::deleteDir (const string &_dpath)
 		value pw = kernel.userdb.getgrnam (perms["group"].sval());
 	}
 	
-	value args;
-	args.newval() = transactionid;
-	args.newval() = dpath;
-	
-	return runScript ("remove-directory", args);
+	return runScript ("remove-directory", $(transactionid)->$(dpath));
 }
 
 // ==========================================================================
@@ -1123,10 +1119,7 @@ void CommandHandler::finishTransaction (void)
 {
 	if (! transactionid) return;
 	
-	value args;
-	args.newval() = transactionid;
-	
-	runScript ("end-transaction", args);
+	runScript ("end-transaction", $(transactionid));
 	
 	log::write (log::info, "handler ", "Closing transaction module=<%S> "
 				"id=<%S>" %format (module, transactionid));
@@ -1141,13 +1134,10 @@ bool CommandHandler::rollbackTransaction (void)
 {
 	if (! transactionid) return false;
 	
-	value args;
-	args.newval() = transactionid;
-
 	log::write (log::info, "handler ", "Rolling back transaction module=<%S> "
 				"id=<%S>" %format (module, transactionid));
 
-	return runScript ("rollback-transaction", args);
+	return runScript ("rollback-transaction" $(transactionid));
 }
 
 // ==========================================================================
@@ -1168,11 +1158,7 @@ bool CommandHandler::deleteFile (const string &path)
 		return false;
 	}
 	
-	value args;
-	args.newval() = transactionid;
-	args.newval() = path;
-	
-	return runScript ("remove-single-file", args);
+	return runScript ("remove-single-file", $(transactionid)->$(path));
 }
 
 // ==========================================================================
@@ -1209,11 +1195,7 @@ bool CommandHandler::createUser (const string &userName, const string &ppass)
 		return false;
 	}
 	
-	value args;
-	args.newval() = transactionid;
-	args.newval() = userName;
-	args.newval() = ppass;
-	
+	value args = $(transactionid)->$(userName)->$(ppass);
 	return runScript ("create-system-user", args);
 }
 
@@ -1241,11 +1223,7 @@ bool CommandHandler::deleteUser (const string &userName)
 		return false;
 	}
 	
-	value args;
-	args.newval() = transactionid;
-	args.newval() = userName;
-
-	return runScript ("remove-system-user", args);
+	return runScript ("remove-system-user", $(transactionid)->$(userName));
 }
 
 // ==========================================================================
@@ -1273,11 +1251,7 @@ bool CommandHandler::setUserShell (	const string &userName,
 		return false;
 	}
 	
-	value args;
-	args.newval() = transactionid;
-	args.newval() = userName;
-	args.newval() = shell;
-
+	value args = $(transactionid)->$(userName)->$(shell);
 	return runScript ("change-system-usershell", args);
 }
 
@@ -1306,11 +1280,7 @@ bool CommandHandler::setUserPass (	const string &userName,
 		return false;
 	}
 	
-	value args;
-	args.newval() = transactionid;
-	args.newval() = userName;
-	args.newval() = password;
-
+	value args = $(transactionid)->$(userName)->$(password);
 	return runScript ("change-user-password", args);
 }
 
@@ -1341,12 +1311,7 @@ bool CommandHandler::setQuota (const string &userName,
 		return false;
 	}
 	
-	value args;
-	args.newval() = transactionid;
-	args.newval() = userName;
-	args.newval() = softLimit;
-	args.newval() = hardLimit;
-
+	value args = $(transactionid)->$(userName)->$(softLimit)->$(hardLimit);
 	return runScript ("change-user-quota", args);
 }
 
@@ -1474,17 +1439,13 @@ bool CommandHandler::startService (const string &serviceName)
 	log::write (log::info, "handler ", "Start service module=<%S> id=<%S> "
 				"name=<%S>" %format (module, transactionid, serviceName));
 	
-	value args;
-	args.newval() = "start";
-	args.newval() = serviceName;
-	
 	if (! guard.checkServiceAccess(module, serviceName, lasterror))
 	{
 		lasterrorcode = ERR_POLICY;
 		return false;
 	}
 
-	return runScript ("control-service", args);
+	return runScript ("control-service", $("start")->$(serviceName));
 }
 
 // ==========================================================================
@@ -1495,17 +1456,13 @@ bool CommandHandler::stopService (const string &serviceName)
 	log::write (log::info, "handler ", "Stop service module=<%S> id=<%S> "
 				"name=<%S>" %format (module, transactionid, serviceName));
 	
-	value args;
-	args.newval() = "stop";
-	args.newval() = serviceName;
-		
 	if (! guard.checkServiceAccess(module, serviceName, lasterror))
 	{
 		lasterrorcode = ERR_POLICY;
 		return false;
 	}
 
-	return runScript ("control-service", args);
+	return runScript ("control-service", $("stop")->$(serviceName));
 }
 
 // ==========================================================================
@@ -1516,17 +1473,13 @@ bool CommandHandler::reloadService (const string &serviceName)
 	log::write (log::info, "handler ", "Reload service module=<%S> id=<%S> "
 				"name=<%S>" %format (module, transactionid, serviceName));
 	
-	value args;
-	args.newval() = "reload";
-	args.newval() = serviceName;
-		
 	if (! guard.checkServiceAccess(module, serviceName, lasterror))
 	{
 		lasterrorcode = ERR_POLICY;
 		return false;
 	}
 
-	return runScript ("control-service", args);
+	return runScript ("control-service", $("reload")->$(serviceName));
 }
 
 // ==========================================================================
@@ -1539,17 +1492,13 @@ bool CommandHandler::setServiceOnBoot (const string &serviceName,
 				"name=<%S> status=<%s>" %format (module, transactionid,
 					serviceName, onBoot ? "on" : "off"));
 	
-	value args;
-	args.newval() = serviceName;
-	args.newval() = onBoot ? 1 : 0;
-	
 	if (! guard.checkServiceAccess(module, serviceName, lasterror))
 	{
 		lasterrorcode = ERR_POLICY;
 		return false;
 	}
 	
-	return runScript ("control-service-boot", args);
+	return runScript ("control-service-boot", $(serviceName)->$(onBoot?1:0));
 }
 
 // ==========================================================================
@@ -1652,10 +1601,7 @@ value *MetaCache::get (const statstring &moduleName)
 	}
 	
 	string mxmlpath;
-	
-	mxmlpath.printf ("/var/opencore/modules/%s.module/module.xml",
-					 moduleName.str());
-
+	mxmlpath = "/var/opencore/modules/%s.module/module.xml" %format (moduleName);
 	if (! fs.exists (mxmlpath)) return &res;
 	
 	res.loadxml (mxmlpath, S);
