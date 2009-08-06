@@ -26,7 +26,9 @@
 #define ERR_NOT_IMPL		4005
 #define ERR_CMD_FAILED		4006
 
+//  -------------------------------------------------------------------------
 /// A collection of worker threads that handle inbound connections.
+//  -------------------------------------------------------------------------
 class SocketGroup : public threadgroup
 {
 public:
@@ -49,9 +51,11 @@ protected:
 	bool				 shouldShutdown;
 };
 
+//  -------------------------------------------------------------------------
 /// Guardian for file operations. Uses the global MetaCache to
 /// read module.xml meta-files and make sense of the fileops statements
 /// therein.
+//  -------------------------------------------------------------------------
 class PathGuard
 {
 public:
