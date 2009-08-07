@@ -1137,7 +1137,7 @@ bool CommandHandler::rollbackTransaction (void)
 	log::write (log::info, "handler ", "Rolling back transaction module=<%S> "
 				"id=<%S>" %format (module, transactionid));
 
-	return runScript ("rollback-transaction" $(transactionid));
+	return runScript ("rollback-transaction", $(transactionid));
 }
 
 // ==========================================================================
