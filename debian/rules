@@ -1,27 +1,29 @@
 #!/usr/bin/make -f
 
+build: build-stamp
 
-BUILD_ROOT=$(CURDIR)/debian/tmp
-install:
-trm -rf ${BUILD_ROOT}
-tmkdir -p ${BUILD_ROOT}/var/opencore/tools
-tinstall -m 750 -d ${BUILD_ROOT}/var/opencore/log
-tmkdir -p ${BUILD_ROOT}/var/opencore/bin
-tmkdir -p ${BUILD_ROOT}/var/opencore/sockets/authd
-tcp -rf authd.app ${BUILD_ROOT}/var/opencore/bin/
-tln -sf authd.app/exec ${BUILD_ROOT}/var/opencore/bin/authd
-tcp -rf opencore-tools/* ${BUILD_ROOT}/var/opencore/tools/
-tcp -f fcat/fcat ${BUILD_ROOT}/var/opencore/tools/
-tmkdir -p ${BUILD_ROOT}/etc/init.d
-tinstall -m 755 contrib/debian.init ${BUILD_ROOT}/etc/init.d/openpanel-authd
+build-stamp:
+	./configure
+	make
+	make -C fcat
+	touch build-stamp
 
-build:
-t./configure
-tmake
-tmake -C fcat
-binary-indep:
+install: install-stamp
+install-stamp: build-stamp
+	dh_testdir
+	dh_testroot
+	dh_installdirs
+	install -m 750 -d debian/openpanel-authd/var/opencore/log
+	cp -rf authd.app debian/openpanel-authd/var/opencore/bin/
+	ln -sf authd.app/exec debian/openpanel-authd/var/opencore/bin/authd
+	cp -rf opencore-tools/* debian/openpanel-authd/var/opencore/tools/
+	cp -f fcat/fcat debian/openpanel-authd/var/opencore/tools/
+	install -m 755 contrib/debian.init debian/openpanel-authd/etc/init.d/openpanel-authd
+	touch install-stamp
 
-binary-arch binary: build install
+binary-indep: build install
+
+binary-arch: build install
 	if [ -d debian/tmp ] ; then dh_install -a --sourcedir=debian/tmp ; fi
 	dh_installdocs -a
 	dh_installdeb -a
@@ -31,5 +33,12 @@ binary-arch binary: build install
 	dh_gencontrol -a
 	dh_md5sums -a
 	dh_builddeb -a
+
+binary: binary-indep binary-arch
+
+clean:
+	rm -f build-stamp install-stamp
+	[ ! -f makeinclude ] || make clean
+	dh_clean
 
 .PHONY: build binary binary-arch binary-indep clean install
