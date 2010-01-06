@@ -1,0 +1,2 @@
+var/opencore/tools
+etc/init.d/openpanel-authd

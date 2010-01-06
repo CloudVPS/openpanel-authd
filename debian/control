@@ -1,0 +1,11 @@
+Source: openpanel-authd
+Section: misc
+Priority: optional
+Maintainer: OpenPanel/Panel6 packager <packages@panelsix.com>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: openpanel-authd
+Architecture: any
+Depends: , libgrace
+Description: authd
