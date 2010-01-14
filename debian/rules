@@ -18,6 +18,7 @@ install-stamp: build-stamp
 	ln -sf authd.app/exec debian/openpanel-authd/var/opencore/bin/authd
 	cp -rf opencore-tools/* debian/openpanel-authd/var/opencore/tools/
 	cp -f fcat/fcat debian/openpanel-authd/var/opencore/tools/
+	mkdir -p debian/openpanel-authd/etc/init.d
 	install -m 755 contrib/debian.init debian/openpanel-authd/etc/init.d/openpanel-authd
 	touch install-stamp
 

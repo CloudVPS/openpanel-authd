@@ -1,2 +1,3 @@
 var/opencore/tools
-etc/init.d/openpanel-authd
+var/opencore/bin
+var/opencore/sockets/authd
