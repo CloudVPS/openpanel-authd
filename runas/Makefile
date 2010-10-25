@@ -3,8 +3,8 @@ all: runas
 clean:
 	rm -f runas runas.o
 
-fcat: fcat.o
+runas: runas.o
 	$(CC) $(LDFLAGS) -o runas runas.o
 
-fcat.o: fcat.c
+runas.o: runas.c
 	$(CC) $(CFLAGS) -c runas.c
