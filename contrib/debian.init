@@ -15,8 +15,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/var/opencore/bin/authd
 NAME=openpanel-authd
 LONGNAME=com.openpanel.svc.authd
-DESC="Opencode authentication server"
-PIDFILE="/var/run/$NAME.pid"
+DESC="Openpanel authentication server"
+PIDFILE="/var/run/$LONGNAME.pid"
 DAEMON_OPTS=
 
 . /lib/lsb/init-functions
@@ -51,6 +51,15 @@ case "$1" in
 	log_daemon_msg "Restarting $DESC" $NAME
 
 	killproc -p $PIDFILE $DAEMON
+
+	if pidofproc -p $PIDFILE $DAEMON > /dev/null; then
+		sleep 1
+	
+		while pidofproc -p $PIDFILE $DAEMON > /dev/null; do
+			log_action_msg "."
+			sleep 5
+		done
+	fi
 
 	if start_daemon -p $PIDFILE $DAEMON $DAEMON_OPTS; then
 	    log_end_msg 0
