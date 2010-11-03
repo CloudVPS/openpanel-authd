@@ -5,8 +5,12 @@
 
 set -e
 
-[ $1 = purge ] && update-rc.d openpanel-authd remove > /dev/null
-#DEBHELPER#
+case "$1" in
+    purge)
+        update-rc.d openpanel-authd remove > /dev/null
+        rm -f /var/opencore/log/authd.*
+        ;;
+esac
 
 exit 0
 

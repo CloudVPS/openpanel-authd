@@ -19,13 +19,13 @@ set -e
 
 case "$1" in
     configure)
-groupadd -f paneluser > /dev/null
-groupadd -f authd > /dev/null
-chown -R root:authd /var/opencore/sockets
-chmod -R 775 /var/opencore/sockets
-chmod 755 /var/opencore/tools
-update-rc.d openpanel-authd start 72 2 3 4 5 . stop 72 0 1 6 . > /dev/null
-invoke-rc.d openpanel-authd restart
+        groupadd -f paneluser > /dev/null
+        groupadd -f authd > /dev/null
+        chown -R root:authd /var/opencore/sockets
+        chmod -R 775 /var/opencore/sockets
+        chmod 755 /var/opencore/tools
+        update-rc.d openpanel-authd start 72 2 3 4 5 . stop 72 0 1 6 . > /dev/null
+        invoke-rc.d openpanel-authd restart
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
