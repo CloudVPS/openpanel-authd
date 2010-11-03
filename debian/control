@@ -8,4 +8,5 @@ Standards-Version: 3.7.2
 Package: openpanel-authd
 Architecture: any
 Depends: libgrace
-Description: authd
+Description: The openpanel root daemon
+ Authd is the only part of openpanel running as root.
