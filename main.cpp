@@ -109,6 +109,9 @@ int AuthdApp::main (void)
 
 	log (log::info, "main", "Shutting down workers");
 	socks.shutdown ();
+	
+	// clean up the socket
+	fs.rm (fname);
 	log (log::info, "main", "Shutting down logthread and exiting");
 	
 	stoplog();
