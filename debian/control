@@ -1,12 +1,12 @@
 Source: openpanel-authd
 Section: misc
 Priority: optional
-Maintainer: OpenPanel packager <packages@openpanel.com
+Maintainer: OpenPanel packager <packages@openpanel.com>
 Build-Depends: debhelper (>= 5), libgrace-dev
 Standards-Version: 3.7.2
 
 Package: openpanel-authd
 Architecture: any
-Depends: libgrace
+Depends: libgrace, ${shlibs:Depends}, ${misc:Depends}
 Description: The openpanel root daemon
  Authd is the only part of openpanel running as root.
