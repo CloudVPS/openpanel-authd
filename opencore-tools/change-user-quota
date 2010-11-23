@@ -16,9 +16,9 @@ if [ -z "$USERNAME" ]; then
   exit 1
 fi
 id "$USERNAME" 2>/dev/null | \
-	egrep "groups=.*[[:digit:]]*(paneluser)" >/dev/null 2>&1 || {
+	egrep "groups=.*[[:digit:]]*(openpaneluser)" >/dev/null 2>&1 || {
 	
-  echo "User [$USERNAME] not in paneluser group"
+  echo "User [$USERNAME] not in openpaneluser group"
   exit 1
 }
 

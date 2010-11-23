@@ -10,8 +10,8 @@
 # restrictions. For more information, please visit the Legal Information 
 # section of the OpenPanel website on http://www.openpanel.com/
 
-if [ -f /var/opencore/conf/customize/user-homedirs ]; then
-  . /var/opencore/conf/customize/user-homedirs
+if [ -f /var/openpanel/conf/customize/user-homedirs ]; then
+  . /var/openpanel/conf/customize/user-homedirs
 else
   CUSTOMIZE_HASHING_LEVEL=0
   CUSTOMIZE_BASE_DIR=/home
@@ -39,9 +39,9 @@ id "$USERNAME" 2>/dev/null || {
 }
 
 id "$USERNAME" 2>/dev/null | \
-	egrep "groups=.*[[:digit:]]*(paneluser)" >/dev/null 2>&1 || {
+	egrep "groups=.*[[:digit:]]*(openpaneluser)" >/dev/null 2>&1 || {
 	
-  echo "User not in paneluser group"
+  echo "User not in openpaneluser group"
   exit 1
 }
 

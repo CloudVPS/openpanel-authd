@@ -39,23 +39,23 @@ make -C fcat
 %install
 BUILD_ROOT=$RPM_BUILD_ROOT
 rm -rf ${BUILD_ROOT}
-mkdir -p ${BUILD_ROOT}/var/opencore/tools
-install -m 750 -d ${BUILD_ROOT}/var/opencore/log
-mkdir -p ${BUILD_ROOT}/var/opencore/bin
-mkdir -p ${BUILD_ROOT}/var/opencore/sockets/authd
-cp -rf authd.app ${BUILD_ROOT}/var/opencore/bin/
-ln -sf authd.app/exec ${BUILD_ROOT}/var/opencore/bin/authd
-cp -rf opencore-tools/* ${BUILD_ROOT}/var/opencore/tools/
-cp -f fcat/fcat ${BUILD_ROOT}/var/opencore/tools/
+mkdir -p ${BUILD_ROOT}/var/openpanel/tools
+install -m 750 -d ${BUILD_ROOT}/var/openpanel/log
+mkdir -p ${BUILD_ROOT}/var/openpanel/bin
+mkdir -p ${BUILD_ROOT}/var/openpanel/sockets/authd
+cp -rf authd.app ${BUILD_ROOT}/var/openpanel/bin/
+ln -sf authd.app/exec ${BUILD_ROOT}/var/openpanel/bin/authd
+cp -rf opencore-tools/* ${BUILD_ROOT}/var/openpanel/tools/
+cp -f fcat/fcat ${BUILD_ROOT}/var/openpanel/tools/
 mkdir -p ${BUILD_ROOT}/etc/rc.d/init.d
 install -m 755 contrib/redhat.init ${BUILD_ROOT}/etc/rc.d/init.d/openpanel-authd
 
 %post
-groupadd -f paneluser > /dev/null
+groupadd -f openpaneluser > /dev/null
 groupadd -f authd > /dev/null
-chown -R root:authd /var/opencore/sockets
-chmod -R 775 /var/opencore/sockets
-chmod 755 /var/opencore/tools
+chown -R root:authd /var/openpanel/sockets
+chmod -R 775 /var/openpanel/sockets
+chmod 755 /var/openpanel/tools
 chkconfig --level 2345 openpanel-authd on
 
 %files

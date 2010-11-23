@@ -11,6 +11,6 @@
 -->
 <com.openpanel.svc.authd.conf>
   <system>
-    <eventlog>/var/opencore/log/authd.event.log</eventlog>
+    <eventlog>/var/openpanel/log/authd.event.log</eventlog>
   </system>
 </com.openpanel.svc.authd.conf>

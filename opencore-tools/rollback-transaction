@@ -17,11 +17,11 @@ if [ -z "$SESSION_ID" ]; then
   exit 1
 fi
 
-if [ ! -d /var/opencore/conf/rollback/$SESSION_ID ]; then
+if [ ! -d /var/openpanel/conf/rollback/$SESSION_ID ]; then
   exit 0
 fi
 
-for rollfile in /var/opencore/conf/rollback/$SESSION_ID/*; do
+for rollfile in /var/openpanel/conf/rollback/$SESSION_ID/*; do
   HDR=`cat "$rollfile" | head -1`
   CMD=`echo "$HDR" | cut -f1 -d" "`
   if [ "$CMD" = "DELETE" ]; then
@@ -36,18 +36,18 @@ for rollfile in /var/opencore/conf/rollback/$SESSION_ID/*; do
     echo -n "Rolling back $FILE..."
     
     if [ -e "$FILE" ]; then
-      /var/opencore/tools/runas $FUID $FGID /bin/rm -f "$FILE"
+      /var/openpanel/tools/runas $FUID $FGID /bin/rm -f "$FILE"
     fi
-    /var/opencore/tools/runas $FUID $FGID touch "$FILE"
-    /var/opencore/tools/runas $FUID $FGID chmod $FMODE "$FILE"
-    tail +2 < "$rollfile" | /var/opencore/tools/runas $FUID $FGID append "$FILE"
+    /var/openpanel/tools/runas $FUID $FGID touch "$FILE"
+    /var/openpanel/tools/runas $FUID $FGID chmod $FMODE "$FILE"
+    tail +2 < "$rollfile" | /var/openpanel/tools/runas $FUID $FGID append "$FILE"
     echo " done"
   elif [ "$CMD" = "CREATE" ]; then
     FILE=`echo "$HDR" | sed -e "s/[A-Z]* [[:digit:]]* [[:digit:]]* //"`
     FUID=`echo "$HDR" | cut -f2 -d" "`
     FGID=`echo "$HDR" | cut -f3 -d" "`
     echo -n "Rolling back $FILE..."
-    /var/opencore/runas $FUID $FGID /bin/rm -f "$FILE"
+    /var/openpanel/runas $FUID $FGID /bin/rm -f "$FILE"
     echo " done"
   elif [ "$CMD" = "RMDIR" ]; then
     opwd=`pwd`
@@ -78,17 +78,17 @@ for rollfile in /var/opencore/conf/rollback/$SESSION_ID/*; do
       echo "Cannot roll back '$DIR': already exists"
       exit 1
     fi
-    /var/opencore/tools/runas $FUID $FGID mkdir "$DIR" || { echo "Rollback fail: mkdir"; exit 1; }
-    /var/opencore/tools/runas $FUID $FGID chmod $FMODE "$DIR"
+    /var/openpanel/tools/runas $FUID $FGID mkdir "$DIR" || { echo "Rollback fail: mkdir"; exit 1; }
+    /var/openpanel/tools/runas $FUID $FGID chmod $FMODE "$DIR"
     echo -n "Rolling back directory $DIR..."
     cd "$DIR" || { echo "Rollback fail: could not cd to $DIR"; exit 1; }
-    tail +2 < "$rollfile" | bzip2 -dc | /var/opencore/tools/runas $FUID $FGID tar xpf - || { echo "Rollback fail: untar"; exit 1; }
+    tail +2 < "$rollfile" | bzip2 -dc | /var/openpanel/tools/runas $FUID $FGID tar xpf - || { echo "Rollback fail: untar"; exit 1; }
     cd "$opwd"
     echo " done"
   elif [ "$CMD" = "MKUSER" ]; then
     UNAME=`echo "$HDR" | cut -f2 -d" "`
     echo -n "Rolling back user ${UNAME}..."
-    MATCH=`id "$UNAME" 2>/dev/null | egrep "groups=.*[[:digit:]]*(paneluser)"`
+    MATCH=`id "$UNAME" 2>/dev/null | egrep "groups=.*[[:digit:]]*(openpaneluser)"`
     if [ ! -z "$MATCH" ]; then
 	  /usr/sbin/userdel "$UNAME" >/dev/null 2>&1 || {
 	    echo " failed"
@@ -100,4 +100,4 @@ for rollfile in /var/opencore/conf/rollback/$SESSION_ID/*; do
 	fi
   fi
 done
-rm -rf /var/opencore/conf/rollback/$SESSION_ID
+rm -rf /var/openpanel/conf/rollback/$SESSION_ID

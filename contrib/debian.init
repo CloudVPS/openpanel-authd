@@ -22,7 +22,7 @@
 set -e
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/var/opencore/bin/authd
+DAEMON=/var/openpanel/bin/openpanel-authd
 NAME=openpanel-authd
 LONGNAME=com.openpanel.svc.authd
 DESC="Openpanel authentication server"

@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
 	}
 	else
 	{
-		sprintf (cmdpath, "/var/opencore/tools/%s", argv[3]);
+		sprintf (cmdpath, "/var/openpanel/tools/%s", argv[3]);
 	}
 	
 	if (setregid (gid,gid)) return 1;

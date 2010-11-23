@@ -51,8 +51,8 @@ if [ ! -d "$TO_DIR" ]; then
 fi
 
 # create the rollback directory for this session if it didn't exist
-if [ ! -d /var/opencore/conf/rollback/$SESSION_ID ]; then
-  mkdir /var/opencore/conf/rollback/$SESSION_ID || {
+if [ ! -d /var/openpanel/conf/rollback/$SESSION_ID ]; then
+  mkdir /var/openpanel/conf/rollback/$SESSION_ID || {
     echo "Error creating rollback directory"
     exit 1
   }
@@ -60,7 +60,7 @@ fi
 
 # generate the filename for the rollback-file
 RBFN=`echo "$TO_DIR" | tr "./ " ___ | sed -e "s/^_//"`
-RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
+RBFILE="/var/openpanel/conf/rollback/$SESSION_ID/${RBFN}.rollback"
 
 ST=`mystat "$TO_DIR"`
 if [ -z "$ST" ]; then
@@ -72,10 +72,10 @@ fi
 echo "RMUSERDIR $TO_UID $TO_GID $ST $TO_DIR" > $RBFILE
 opwd=`pwd`
 if cd "$TO_DIR" 2>/dev/null; then
-  /var/opencore/tools/runas $TO_UID $TO_GID /bin/tar pcf - . | bzip2 -c >> $RBFILE
+  /var/openpanel/tools/runas $TO_UID $TO_GID /bin/tar pcf - . | bzip2 -c >> $RBFILE
   # with the contents safely tucked away we can now nuke it from orbit
   cd "$opwd"
-  /var/opencore/tools/runas $TO_UID $TO_GID /bin/rm -rf "$TO_DIR"
+  /var/openpanel/tools/runas $TO_UID $TO_GID /bin/rm -rf "$TO_DIR"
 else
   echo "Error changing to directory for rollback"
   fi

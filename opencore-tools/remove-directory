@@ -45,8 +45,8 @@ if [ ! -d "$TO_DIR" ]; then
 fi
 
 # create the rollback directory for this session if it didn't exist
-if [ ! -d /var/opencore/conf/rollback/$SESSION_ID ]; then
-  mkdir /var/opencore/conf/rollback/$SESSION_ID || {
+if [ ! -d /var/openpanel/conf/rollback/$SESSION_ID ]; then
+  mkdir /var/openpanel/conf/rollback/$SESSION_ID || {
     echo "Error creating rollback directory"
     exit 1
   }
@@ -54,7 +54,7 @@ fi
 
 # generate the filename for the rollback-file
 RBFN=`echo "$TO_DIR" | tr "./ " ___ | sed -e "s/^_//"`
-RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
+RBFILE="/var/openpanel/conf/rollback/$SESSION_ID/${RBFN}.rollback"
 
 # create the rollback file (including tar archive of the directory contents)
 ST=`mystat "$TO_DIR"`

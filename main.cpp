@@ -20,7 +20,7 @@ APPOBJECT(AuthdApp);
 MetaCache MCache;
 AuthdApp *AUTHD;
 
-#define PATH_SWUPD_SOCKET "/var/opencore/sockets/swupd/swupd.sock"
+#define PATH_SWUPD_SOCKET "/var/openpanel/sockets/swupd/swupd.sock"
 
 void handle_SIGTERM (int sig)
 {
@@ -73,7 +73,7 @@ int AuthdApp::main (void)
 	
 	log (log::info, "main    ", "OpenPanel authd %s started", AUTHD_VERSION);
 	
-	string fname = "/var/opencore/sockets/authd/authd.sock";
+	string fname = "/var/openpanel/sockets/authd/authd.sock";
 	
 	if (fs.exists (fname))
 		fs.rm (fname);
@@ -92,7 +92,7 @@ int AuthdApp::main (void)
 	
 	delayedexitok ();
 	
-	fs.chgrp (fname, "authd");
+	fs.chgrp (fname, "openpanel-authd");
 	fs.chmod (fname, 0770);
 	
 	for (int i=0; i<8; ++i)
@@ -604,7 +604,7 @@ bool CommandHandler::runScript (const string &scriptName,
 											   scriptName, arguments.count()));
 	
 	// Fill in the fully qualified path to the script.
-	scriptPath = "/var/opencore/tools/%s" %format (scriptName);
+	scriptPath = "/var/openpanel/tools/%s" %format (scriptName);
 	
 	// Croak if the script doesn't exist.
 	if (! fs.exists (scriptPath))
@@ -688,13 +688,13 @@ bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 	uid_t destuid = 0;
 	gid_t destgid = 0;
 	
-	gr = kernel.userdb.getgrnam ("paneluser");
+	gr = kernel.userdb.getgrnam ("openpaneluser");
 	if (! gr)
 	{
 		lasterrorcode = ERR_NOT_FOUND;
-		lasterror = "The paneluser group was not found";
+		lasterror = "The openpaneluser group was not found";
 		
-		log::write (log::error, "handler", "No paneluser group found");
+		log::write (log::error, "handler", "No openpaneluser group found");
 		return false;
 	}
 	
@@ -724,10 +724,10 @@ bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 	if (! gr["members"].exists (user))
 	{
 		lasterrorcode = ERR_POLICY;
-		lasterror = "The user is not a member of group paneluser";
+		lasterror = "The user is not a member of group openpaneluser";
 		
 		log::write (log::error, "handler", "User <%S> not a member of "
-					"group paneluser" %format (user));
+					"group openpaneluser" %format (user));
 		return false;
 	}
 	
@@ -945,13 +945,13 @@ bool CommandHandler::makeUserDir (const string &dpath,
 	uid_t destuid;
 	gid_t destgid;
 	
-	gr = kernel.userdb.getgrnam ("paneluser");
+	gr = kernel.userdb.getgrnam ("openpaneluser");
 	if (! gr)
 	{
 		lasterrorcode = ERR_NOT_FOUND;
-		lasterror = "The paneluser group was not found";
+		lasterror = "The openpaneluser group was not found";
 		
-		log::write (log::error, "handler", "No paneluser group found");
+		log::write (log::error, "handler", "No openpaneluser group found");
 		return false;
 	}
 	
@@ -981,10 +981,10 @@ bool CommandHandler::makeUserDir (const string &dpath,
 	if (! gr["members"].exists (user))
 	{
 		lasterrorcode = ERR_POLICY;
-		lasterror = "The user is not a member of group paneluser";
+		lasterror = "The user is not a member of group openpaneluser";
 		
 		log::write (log::error, "handler", "User <%S> not a member of "
-					"group paneluser" %format (user));
+					"group openpaneluser" %format (user));
 		return false;
 	}
 	
@@ -1609,7 +1609,7 @@ value *MetaCache::get (const statstring &moduleName)
 	}
 	
 	string mxmlpath;
-	mxmlpath = "/var/opencore/modules/%s.module/module.xml" %format (moduleName);
+	mxmlpath = "/var/openpanel/modules/%s.module/module.xml" %format (moduleName);
 	if (! fs.exists (mxmlpath)) return &res;
 	
 	res.loadxml (mxmlpath, S);
@@ -1677,7 +1677,7 @@ string *PathGuard::translateSource (const statstring &moduleName,
 	{
 		if (fileName.globcmp (op.id().sval()))
 		{
-			res.printf ("/var/opencore/conf/staging/%s/%s",
+			res.printf ("/var/openpanel/conf/staging/%s/%s",
 						moduleName.str(), fileName.str());
 			
 			if (! fs.exists (res))
@@ -1690,20 +1690,20 @@ string *PathGuard::translateSource (const statstring &moduleName,
 				unsigned int perms;
 				value finf;
 				finf = fs.getinfo (res);
-				if (finf["user"] != "opencore")
+				if (finf["user"] != "openpanel-core")
 				{
 					log::write (log::error, "pathgrd ", "Owner mismatch "
 								"on file <%S>: %s" %format (fileName,
 															finf["user"]));
-					error = "File owner mismatch (not opencore)";
+					error = "File owner mismatch (not openpanel-opencore)";
 					res.crop();
 				}
-				else if (finf["group"] != "opencore")
+				else if (finf["group"] != "openpanel-opencore")
 				{
 					log::write (log::error, "pathgrd ", "Group mismatch "
 								"on file <%S>: %s" %format (fileName,
 															finf["group"]));
-					error = "File group mismatch (not opencore)";
+					error = "File group mismatch (not openpanel-opencore)";
 					res.crop();
 				}
 				else

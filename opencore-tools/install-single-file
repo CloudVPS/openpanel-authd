@@ -47,8 +47,8 @@ if [ -z "$FUID" ]; then
 fi
 
 # create the rollback directory for this session if it didn't exist
-if [ ! -d /var/opencore/conf/rollback/$SESSION_ID ]; then
-  mkdir /var/opencore/conf/rollback/$SESSION_ID || {
+if [ ! -d /var/openpanel/conf/rollback/$SESSION_ID ]; then
+  mkdir /var/openpanel/conf/rollback/$SESSION_ID || {
     echo "Error creating rollback directory"
     exit 1
   }
@@ -56,7 +56,7 @@ fi
 
 # generate the filename for the rollback-file
 RBFN=`echo "$TO_FILE" | tr "./ " ___ | sed -e "s/^_//"`
-RBFILE="/var/opencore/conf/rollback/$SESSION_ID/${RBFN}.rollback"
+RBFILE="/var/openpanel/conf/rollback/$SESSION_ID/${RBFN}.rollback"
 
 # depending on the status of the destination file, create the apropriate
 # rollback-file
@@ -70,7 +70,7 @@ if [ -f "$TO_FILE" ]; then
 	  exit 1
   }
 	
-  /var/opencore/tools/runas $FUID $FGID fcat "$TO_FILE" >> $RBFILE || {
+  /var/openpanel/tools/runas $FUID $FGID fcat "$TO_FILE" >> $RBFILE || {
   	  echo "I/O error"
   	  exit 1;
   }
@@ -82,7 +82,7 @@ fi
 # create a temporary file in the destination directory, we will write
 # the new contents to this file first.
 TO_PATH=`dirname "$TO_FILE"`
-TMP_FILE=`/var/opencore/tools/runas $FUID $FGID /bin/mktemp -p "$TO_PATH" .install_file.XXXXXXXX`
+TMP_FILE=`/var/openpanel/tools/runas $FUID $FGID /bin/mktemp -p "$TO_PATH" .install_file.XXXXXXXX`
 if [ -z "$TMP_FILE" ]; then
   echo "Error creating temporary file"
   rm -f "$RBFILE"
@@ -95,27 +95,27 @@ if [ ! -f "$TMP_FILE" ]; then
 fi
 
 # set permissions on the new file
-/var/opencore/tools/runas $FUID $FGID /bin/chmod $MODE "$TMP_FILE" || {
+/var/openpanel/tools/runas $FUID $FGID /bin/chmod $MODE "$TMP_FILE" || {
 	echo "Tempfile chmod failed"
-	/var/opencore/tools/runas $FUID $FGID rm -f "$TMP_FILE"
+	/var/openpanel/tools/runas $FUID $FGID rm -f "$TMP_FILE"
   rm -f "$RBFILE"
 	exit 1
 }
 
 # copy the source data into the temporary file
 # the fcat is probably superfluous. The runas isn't.
-/var/opencore/tools/fcat "$FROM_FILE" | \
-	/var/opencore/tools/runas $FUID $FGID write "$TMP_FILE" || {
+/var/openpanel/tools/fcat "$FROM_FILE" | \
+	/var/openpanel/tools/runas $FUID $FGID write "$TMP_FILE" || {
 		echo "I/O error"
-		/var/opencore/tools/runas $FUID $FGID /bin/rm -f "$TMP_FILE"
+		/var/openpanel/tools/runas $FUID $FGID /bin/rm -f "$TMP_FILE"
 	    rm -f "$RBFILE"
 		exit 1
 	}
 
 # make the temporary file the new active file
-/var/opencore/tools/runas $FUID $FGID /bin/mv "$TMP_FILE" "$TO_FILE" || {
+/var/openpanel/tools/runas $FUID $FGID /bin/mv "$TMP_FILE" "$TO_FILE" || {
 	echo "Tempfile install failed"
-	/var/opencore/tools/runas $FUID $FGID /bin/rm -f "$TMP_FILE"
+	/var/openpanel/tools/runas $FUID $FGID /bin/rm -f "$TMP_FILE"
     rm -f "$RBFILE"
 	exit 1
 }

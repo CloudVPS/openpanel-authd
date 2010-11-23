@@ -19,7 +19,7 @@ set -e
 case "$1" in
     purge)
         update-rc.d openpanel-authd remove > /dev/null
-        rm -f /var/opencore/log/authd.*
+        rm -f /var/openpanel/log/authd.*
         ;;
 esac
 

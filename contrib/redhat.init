@@ -32,7 +32,7 @@ prog="authd"
 # Check that networking is up.
 [ "${NETWORKING}" = "no" ] && exit 1
 
-DAEMON=/var/opencore/bin/authd
+DAEMON=/var/openpanel/bin/openpanel-authd
 NAME=com.openpanel.svc.authd
 
 # Check if executable exists

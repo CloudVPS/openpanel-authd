@@ -15,7 +15,7 @@ set -e
 case "$1" in
     remove)
         invoke-rc.d openpanel-authd stop || true
-        rm -f /var/opencore/sockets/authd/authd.sock
+        rm -f /var/openpanel/sockets/authd/authd.sock
     ;;
 
     upgrade|deconfigure|failed-upgrade)
