@@ -6,6 +6,13 @@ if [ -z "$SESSION_ID" ]; then
   exit 1
 fi
 
+if [ ! -d /var/opencore/conf/rollback/$TRANSID ]; then
+  mkdir /var/opencore/conf/rollback/$TRANSID || {
+    echo "Error creating rollback directory"
+    exit 1
+  }
+fi
+
 TO_UID=`echo "$2" | grep "^[0123456789]*$"`
 if [ -z "$TO_UID" ]; then
   echo "No userid specifified"
