@@ -1,50 +1,56 @@
 #! /bin/sh
-#
-#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#		Modified for Debian 
-#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
-#
-# Version:	@(#)openpanel 0.99 11-Nov-2006  danny@panelsix.com
-#
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/var/opencore/bin/authd
-NAME=com.openpanel.svc.authd
-DESC=authd
+# This file is part of OpenPanel - The Open Source Control Panel
+# OpenPanel is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free 
+# Software Foundation, using version 3 of the License.
+#
+# Please note that use of the OpenPanel trademark may be subject to additional 
+# restrictions. For more information, please visit the Legal Information 
+# section of the OpenPanel website on http://www.openpanel.com/
 
-waitforpid() {
-  for try in 1 2 3 4 5 6 7 8 9 10; do
-    if [ ! -e /var/run/$NAME.pid ]; then
-      return
-    fi
-    thepid=$(cat /var/run/$NAME.pid 2>/dev/null)
-    if [ -z "$thepid" ]; then
-      return
-    fi
-    kill -0 $thepid || return
-    sleep 1
-  done
-  if [ ! -z "$thepid" ]; then
-    kill -9 $thepid
-  fi
-}
 
-test -x $DAEMON || exit 0
+### BEGIN INIT INFO
+# Provides:			opencore-authd
+# Required-Start:	$remote_fs $syslog
+# Required-Stop:	$remote_fs $syslog
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description:	Opencore authd
+### END INIT INFO
 
 set -e
 
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/var/opencore/bin/authd
+NAME=openpanel-authd
+LONGNAME=com.openpanel.svc.authd
+DESC="Openpanel authentication server"
+PIDFILE="/var/run/$LONGNAME.pid"
+DAEMON_OPTS=
+
+. /lib/lsb/init-functions
+
+# check if the daemon exists
+test -x $DAEMON || exit 0
+
 case "$1" in
   start)
-	echo -n "Starting $DESC: "
-	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
-		--exec $DAEMON -- $DAEMON_OPTS
-	echo "$NAME."
+	log_daemon_msg "Starting $DESC" $NAME
+	if start_daemon -p $PIDFILE $DAEMON $DAEMON_OPTS; then
+		#mv `ls -1tr /var/run/pound.pid | tail -1` $PIDFILE
+	    log_success_msg
+	else
+	    log_failure_msg
+	fi
 	;;
   stop)
-	echo -n "Stopping $DESC: "
-	start-stop-daemon --stop --signal TERM --quiet --pidfile /var/run/$NAME.pid \
-		--exec $DAEMON
-	echo "$NAME."
+	log_daemon_msg "Stopping $DESC" $NAME
+	if killproc -p $PIDFILE $DAEMON; then
+	    log_success_msg
+	else
+	    log_failure_msg
+	fi
 	;;
   restart|force-reload)
 	#
@@ -52,18 +58,37 @@ case "$1" in
 	#	option to the "reload" entry above. If not, "force-reload" is
 	#	just the same as "restart".
 	#
-	echo -n "Restarting $DESC: "
-	start-stop-daemon --stop --signal TERM --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON
-	waitforpid
-	start-stop-daemon --start --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS
-	echo "$NAME."
+	log_daemon_msg "Restarting $DESC" $NAME
+
+	killproc -p $PIDFILE $DAEMON
+
+	if pidofproc -p $PIDFILE $DAEMON > /dev/null; then
+		sleep 1
+	
+		while pidofproc -p $PIDFILE $DAEMON > /dev/null; do
+			log_action_msg "."
+			sleep 5
+		done
+	fi
+
+	if start_daemon -p $PIDFILE $DAEMON $DAEMON_OPTS; then
+	    log_end_msg 0
+	else
+	    log_end_msg 1
+	fi
 	;;
+  status)
+    if pidofproc -p $PIDFILE $DAEMON > /dev/null; then
+      log_success_msg "$NAME is running"
+    else
+      log_success_msg "$NAME is not running"
+    fi
+    exit $status
+	;;
+  
   *)
 	N=/etc/init.d/$NAME
-	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $N {start|stop|restart|force-reload}" >&2
+	echo "Usage: $N {start|stop|restart|force-reload|status}" >&2
 	exit 1
 	;;
 esac

@@ -1,8 +1,15 @@
+// This file is part of OpenPanel - The Open Source Control Panel
+// OpenPanel is free software: you can redistribute it and/or modify it 
+// under the terms of the GNU General Public License as published by the Free 
+// Software Foundation, using version 3 of the License.
+//
+// Please note that use of the OpenPanel trademark may be subject to additional 
+// restrictions. For more information, please visit the Legal Information 
+// section of the OpenPanel website on http://www.openpanel.com/
+
 /* ======================================================================== *\
  | fcat: output a single file only if it is a verified regular file and     |
  |       not a softlink or other special file.                              |
- |                                                                          |
- | Copyright (C) 2006 PanelSix VOF - Released under the GPL License         |
 \* ======================================================================== */
 
 #include <stdio.h>

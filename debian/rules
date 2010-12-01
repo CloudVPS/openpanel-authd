@@ -1,11 +1,21 @@
 #!/usr/bin/make -f
 
+# This file is part of OpenPanel - The Open Source Control Panel
+# OpenPanel is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the Free 
+# Software Foundation, using version 3 of the License.
+#
+# Please note that use of the OpenPanel trademark may be subject to additional 
+# restrictions. For more information, please visit the Legal Information 
+# section of the OpenPanel website on http://www.openpanel.com/
+
 build: build-stamp
 
 build-stamp:
 	./configure
 	make
 	make -C fcat
+	make -C runas
 	touch build-stamp
 
 install: install-stamp
@@ -18,6 +28,7 @@ install-stamp: build-stamp
 	ln -sf authd.app/exec debian/openpanel-authd/var/opencore/bin/authd
 	cp -rf opencore-tools/* debian/openpanel-authd/var/opencore/tools/
 	cp -f fcat/fcat debian/openpanel-authd/var/opencore/tools/
+	cp -f runas/runas debian/openpanel-authd/var/opencore/tools/
 	mkdir -p debian/openpanel-authd/etc/init.d
 	install -m 755 contrib/debian.init debian/openpanel-authd/etc/init.d/openpanel-authd
 	touch install-stamp
