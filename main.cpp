@@ -1554,6 +1554,8 @@ bool CommandHandler::triggerSoftwareUpdate (void)
 	}
 	catch (...)
 	{
+		log::write (log::info, "handler", "Exception: %S"
+					%format (e.description));
 	}
 	
 	s.close ();
