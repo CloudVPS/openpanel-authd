@@ -1538,12 +1538,18 @@ bool CommandHandler::triggerSoftwareUpdate (void)
 	{
 		s.writeln ("update");
 		string line = s.gets();
+		if (! line) line = s.gets();
 		s.close ();
 		if (line[0] == '+')
 		{
 			log::write (log::info, "handler", "Triggered software "
 						"update");
 			return true;
+		}
+		else
+		{
+			log::write (log::info, "handler", "Error from swupd: %S"
+						%format (line));
 		}
 	}
 	catch (...)
