@@ -1536,7 +1536,7 @@ bool CommandHandler::triggerSoftwareUpdate (void)
 	
 	try
 	{
-		s.writeln ("update");
+		s.puts ("update\n");
 		string line = s.gets();
 		if (! line) line = s.gets();
 		s.close ();
