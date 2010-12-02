@@ -1552,7 +1552,7 @@ bool CommandHandler::triggerSoftwareUpdate (void)
 						%format (line));
 		}
 	}
-	catch (...)
+	catch (exception e)
 	{
 		log::write (log::info, "handler", "Exception: %S"
 					%format (e.description));
