@@ -16,8 +16,8 @@ if [ -z "$SESSION_ID" ]; then
   exit 1
 fi
 
-if [ ! -d /var/opencore/conf/rollback/$SESSION_ID ]; then
-  mkdir /var/opencore/conf/rollback/$SESSION_ID || {
+if [ ! -d /var/openpanel/conf/rollback/$SESSION_ID ]; then
+  mkdir /var/openpanel/conf/rollback/$SESSION_ID || {
     echo "Error creating rollback directory"
     exit 1
   }
