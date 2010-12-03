@@ -1695,15 +1695,15 @@ string *PathGuard::translateSource (const statstring &moduleName,
 					log::write (log::error, "pathgrd ", "Owner mismatch "
 								"on file <%S>: %s" %format (fileName,
 															finf["user"]));
-					error = "File owner mismatch (not openpanel-opencore)";
+					error = "File owner mismatch (not openpanel-core)";
 					res.crop();
 				}
-				else if (finf["group"] != "openpanel-opencore")
+				else if (finf["group"] != "openpanel-core")
 				{
 					log::write (log::error, "pathgrd ", "Group mismatch "
 								"on file <%S>: %s" %format (fileName,
 															finf["group"]));
-					error = "File group mismatch (not openpanel-opencore)";
+					error = "File group mismatch (not openpanel-core)";
 					res.crop();
 				}
 				else
