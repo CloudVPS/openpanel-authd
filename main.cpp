@@ -1264,7 +1264,7 @@ bool CommandHandler::setUserPass (	const string &userName,
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	log::write (log::info, "handler ", "Set User's Shell module=<%S> id=<%S> "
+	log::write (log::info, "handler ", "Set User's password module=<%S> id=<%S> "
 				"name=<%S>" %format (module, transactionid, userName));
 	
 	if (! guard.checkCommandAccess(module, "setuserpass", "user", lasterror))
