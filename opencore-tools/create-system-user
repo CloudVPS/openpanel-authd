@@ -76,4 +76,4 @@ esac
 /usr/sbin/useradd -m -d "$HOMEDIR" -G openpaneluser "$USERNAME" && \
 	echo "MKUSER $USERNAME" > $RBFILE && \
 	chmod 711 "$HOMEDIR" && \
-	echo "$USERNAME:$PASSWORD" | /usr/sbin/chpasswd -e
+	/usr/sbin/usermod -p "$PASSWORD" "$USERNAME"
