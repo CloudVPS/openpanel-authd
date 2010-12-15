@@ -19,6 +19,7 @@ APPOBJECT(AuthdApp);
 
 MetaCache MCache;
 AuthdApp *AUTHD;
+bool DEMO;
 
 #define PATH_SWUPD_SOCKET "/var/openpanel/sockets/swupd/swupd.sock"
 
@@ -58,6 +59,10 @@ int AuthdApp::main (void)
 		fout.writeln ("OpenPanel authd %s" %format (AUTHD_VERSION_FULL));
 		return 0;
 	}
+	
+	DEMO = false;
+	if (argv.exists ("--demo")) DEMO = true;
+	
 	string conferr; ///< Error return from configuration class.
 	
 	// Add watcher value for event log. System will daemonize after
@@ -567,6 +572,7 @@ bool CommandHandler::runScriptExt (const string &scriptName,
 								const value &arguments,
 								const string &asUser)
 {
+	if (DEMO) return true;
 	string realUser = asUser;
 	if (! guard.checkScriptAccess(module, scriptName, realUser, lasterror))
 	{
@@ -584,6 +590,7 @@ bool CommandHandler::runScript (const string &scriptName,
 								const value &arguments,
 								const string &asUser)
 {
+	if (DEMO) return true;
 	static string AlphaNumeric ("abcdefghijklmnopqrstuvwxyz"
 								"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 								"0123456789_.-");
@@ -668,6 +675,7 @@ bool CommandHandler::runScript (const string &scriptName,
 bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 									  const string &user)
 {
+	if (DEMO) return true;
 	log::write (log::info, "handler", "installUserFile (%s,%s,%s)"
 						%format (fname, dpath, user));
 	string pdpath = (dpath[0] == '/') ? dpath.mid(1) : dpath;
@@ -744,6 +752,7 @@ bool CommandHandler::installUserFile (const string &fname, const string &dpath,
 bool CommandHandler::installFile (const string &fname, const string &_dpath,
 								  uid_t destuid, gid_t destgid)
 {
+	if (DEMO) return true;
 	string tfname;
 	string tdname;
 	value perms;
@@ -839,6 +848,8 @@ bool CommandHandler::installFile (const string &fname, const string &_dpath,
 // ==========================================================================
 bool CommandHandler::makeDir (const string &_dpath)
 {
+	if (DEMO) return true;
+
 	string tdname;
 	value perms;
 	string guarderr;
@@ -926,6 +937,7 @@ bool CommandHandler::makeUserDir (const string &dpath,
 								  const string &user,
 								  const string &modestr)
 {
+	if (DEMO) return true;
 	string pdpath = (dpath[0] == '/') ? dpath.mid(1) : dpath;
 	int mode = modestr.toint (8);
 	if (dpath.strstr ("..") >= 0)
@@ -1028,6 +1040,7 @@ bool CommandHandler::makeUserDir (const string &dpath,
 // ==========================================================================
 bool CommandHandler::getObject (const string &objname, file &out)
 {
+	// FIXME: what to do in demo mode?
 	string fname;
 	string err;
 	
@@ -1061,6 +1074,8 @@ bool CommandHandler::getObject (const string &objname, file &out)
 // ==========================================================================
 bool CommandHandler::deleteDir (const string &_dpath)
 {
+	if (DEMO) return true;
+	
 	string tdname;
 	value perms;
 	string guarderr;
@@ -1117,6 +1132,7 @@ bool CommandHandler::deleteDir (const string &_dpath)
 // ==========================================================================
 void CommandHandler::finishTransaction (void)
 {
+	if (DEMO) return;
 	if (! transactionid) return;
 	
 	runScript ("end-transaction", $(transactionid));
@@ -1132,6 +1148,7 @@ void CommandHandler::finishTransaction (void)
 // ==========================================================================
 bool CommandHandler::rollbackTransaction (void)
 {
+	if (DEMO) return true;
 	if (! transactionid) return false;
 	
 	log::write (log::info, "handler ", "Rolling back transaction module=<%S> "
@@ -1145,6 +1162,7 @@ bool CommandHandler::rollbackTransaction (void)
 // ==========================================================================
 bool CommandHandler::deleteFile (const string &path)
 {
+	if (DEMO) return true;
 	log::write (log::info, "handler ", "Delete file module=<%S> id=<%S> "
 				"path=<%S>" %format (module, transactionid, path));
 	
@@ -1166,6 +1184,7 @@ bool CommandHandler::deleteFile (const string &path)
 // ==========================================================================
 bool CommandHandler::createUser (const string &userName, const string &ppass)
 {
+	if (DEMO) return true;
 	static string validUser ("abcdefghijklmnopqrstuvwxyz0123456789_-."
 							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 	static string validPass ("abcdefghijklmnopqrstuvwxyz0123456789"
@@ -1223,6 +1242,7 @@ bool CommandHandler::deleteUser (const string &userName)
 		return false;
 	}
 	
+	if (DEMO) return true;
 	return runScript ("remove-system-user", $(transactionid)->$(userName));
 }
 
@@ -1250,6 +1270,8 @@ bool CommandHandler::setUserShell (	const string &userName,
 		lasterror     = "Invalid username";
 		return false;
 	}
+
+	if (DEMO) return true;
 	
 	value args = $(transactionid)->$(userName)->$(shell);
 	return runScript ("change-system-usershell", args);
@@ -1279,6 +1301,8 @@ bool CommandHandler::setUserPass (	const string &userName,
 		lasterror     = "Invalid username";
 		return false;
 	}
+
+	if (DEMO) return true;
 	
 	value args = $(transactionid)->$(userName)->$(password);
 	return runScript ("change-user-password", args);
@@ -1311,6 +1335,8 @@ bool CommandHandler::setQuota (const string &userName,
 		return false;
 	}
 	
+	if (DEMO) return true;
+
 	value args = $(transactionid)->$(userName)->$(softLimit)->$(hardLimit);
 	return runScript ("change-user-quota", args);
 }
@@ -1445,6 +1471,7 @@ bool CommandHandler::startService (const string &serviceName)
 		return false;
 	}
 
+	if (DEMO) return true;
 	return runScript ("control-service", $("start")->$(serviceName));
 }
 
@@ -1462,6 +1489,7 @@ bool CommandHandler::stopService (const string &serviceName)
 		return false;
 	}
 
+	if (DEMO) return true;
 	return runScript ("control-service", $("stop")->$(serviceName));
 }
 
@@ -1479,6 +1507,7 @@ bool CommandHandler::reloadService (const string &serviceName)
 		return false;
 	}
 
+	if (DEMO) return true;
 	return runScript ("control-service", $("reload")->$(serviceName));
 }
 
@@ -1498,6 +1527,7 @@ bool CommandHandler::setServiceOnBoot (const string &serviceName,
 		return false;
 	}
 	
+	if (DEMO) return true;
 	return runScript ("control-service-boot", $(serviceName)->$(onBoot?1:0));
 }
 
@@ -1526,6 +1556,7 @@ bool CommandHandler::triggerSoftwareUpdate (void)
 		return false;
 	}
 	
+	if (DEMO) return true;
 	
 	if (! s.uconnect (PATH_SWUPD_SOCKET))
 	{

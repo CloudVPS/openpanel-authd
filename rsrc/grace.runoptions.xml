@@ -22,4 +22,7 @@
   <grace.option id="--version">
     <grace.argc>0</grace.argc>
   </grace.option>
+  <grace.option id="--demo">
+    <grace.argc>0</grace.argc>
+  </grace.option>
 </grace.runoptions>
