@@ -533,7 +533,7 @@ tcpsocket *SocketGroup::accept (void)
 
 void SocketGroup::shutdown (void)
 {
-	shouldShutdown = false;
+	shouldShutdown = true;
 	broadcastevent ("exit");
 	while (true)
 	{
