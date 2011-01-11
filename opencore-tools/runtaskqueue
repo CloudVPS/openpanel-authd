@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 # This file is part of OpenPanel - The Open Source Control Panel
 # OpenPanel is free software: you can redistribute it and/or modify it 
 # under the terms of the GNU General Public License as published by the Free 
@@ -10,20 +9,9 @@
 # restrictions. For more information, please visit the Legal Information 
 # section of the OpenPanel website on http://www.openpanel.com/
 
-# postrm framework for openpanel packages
-#
-# see: dh_installdeb(1)
-
-set -e
-
-case "$1" in
-    purge)
-        update-rc.d openpanel-authd remove > /dev/null
-        rm -f /var/openpanel/log/authd.*
-	rm -f /var/openpanel/taskqueue/*
-        ;;
-esac
-
-exit 0
-
-
+if [ -d /var/openpanel/taskqueue ]; then
+  ls -1 /var/openpanel/taskqueue/ | sort -u | while read scriptname; do
+    "/var/openpanel/taskqueue/$scriptname" || true
+    rm -f "/var/openpanel/taskqueue/$scriptname"
+  done
+fi

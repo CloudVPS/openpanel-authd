@@ -336,6 +336,16 @@ void SocketWorker::handle (tcpsocket &s)
 
 			caseselector (cmd[0])
 			{
+				incaseof ("runtaskqueue") :
+					if (handler.module == "openpanel-core")
+					{
+						if (handler.runScript("runtaskqueue",$("startup")))
+						{
+							cmdok = true;
+						}
+					}
+					break;
+					
 				incaseof ("installfile") :
 					if (cmd.count() != 3) break;
 					if (handler.installFile (cmd[1], cmd[2])) cmdok = true;

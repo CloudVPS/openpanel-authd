@@ -31,6 +31,7 @@ install:
 	mkdir -p ${DESTDIR}/var/openpanel/log
 	mkdir -p ${DESTDIR}/var/openpanel/bin
 	mkdir -p ${DESTDIR}/var/openpanel/tools
+	mkdir -p ${DESTDIR}/var/openpanel/taskqueue
 	mkdir -p ${DESTDIR}/var/openpanel/sockets/authd
 	
 	cp -rf openpanel-authd.app ${DESTDIR}/var/openpanel/bin/openpanel-authd.app
