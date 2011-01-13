@@ -1073,7 +1073,7 @@ bool CommandHandler::getObject (const string &objname, file &out)
 	}
 	
 	string obj;
-	obj = fs.load (fname);
+	if (fs.exists (fname)) obj = fs.load (fname);
 	out.printf ("+OK %i\n", obj.strlen());
 	out.puts (obj);
 	return true;
