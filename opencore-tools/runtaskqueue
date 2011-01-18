@@ -10,7 +10,7 @@
 # section of the OpenPanel website on http://www.openpanel.com/
 
 if [ -d /var/openpanel/taskqueue ]; then
-  ls -1 /var/openpanel/taskqueue/ | sort -u | while read scriptname; do
+  ls -1 /var/openpanel/taskqueue/ | sort | while read scriptname; do
     "/var/openpanel/taskqueue/$scriptname" || true
     rm -f "/var/openpanel/taskqueue/$scriptname"
   done
