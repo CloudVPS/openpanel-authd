@@ -29,6 +29,10 @@ DESC="Openpanel authentication server"
 PIDFILE="/var/run/$LONGNAME.pid"
 DAEMON_OPTS=
 
+
+if [ -f /etc/default/openpanel-authd ] ; then
+	. /etc/default/openpanel-authd
+fi
 . /lib/lsb/init-functions
 
 # check if the daemon exists

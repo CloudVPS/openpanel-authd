@@ -39,7 +39,6 @@ install:
 	cp -rf opencore-tools/* ${DESTDIR}/var/openpanel/tools/
 	cp -f fcat/fcat ${DESTDIR}/var/openpanel/tools/
 	cp -f runas/runas ${DESTDIR}/var/openpanel/tools/
-	install -m 755 contrib/debian.init ${DESTDIR}/etc/init.d/openpanel-authd
 
 clean:
 	rm -f *.o *.exe
