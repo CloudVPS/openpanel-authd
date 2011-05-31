@@ -40,7 +40,7 @@ for rollfile in /var/openpanel/conf/rollback/$SESSION_ID/*; do
     fi
     /var/openpanel/tools/runas $FUID $FGID touch "$FILE"
     /var/openpanel/tools/runas $FUID $FGID chmod $FMODE "$FILE"
-    tail +2 < "$rollfile" | /var/openpanel/tools/runas $FUID $FGID append "$FILE"
+    tail -n +2 < "$rollfile" | /var/openpanel/tools/runas $FUID $FGID append "$FILE"
     echo " done"
   elif [ "$CMD" = "CREATE" ]; then
     FILE=`echo "$HDR" | sed -e "s/[A-Z]* [[:digit:]]* [[:digit:]]* //"`
@@ -65,7 +65,7 @@ for rollfile in /var/openpanel/conf/rollback/$SESSION_ID/*; do
     chmod $FMODE "$DIR"
     echo -n "Rolling back directory $DIR..."
     cd "$DIR" || { echo "Rollback fail: could not cd to $DIR"; exit 1; }
-    tail +2 < "$rollfile" | bzip2 -dc | tar xpf - || { echo "Rollback fail: untar"; exit 1; }
+    tail -n +2 < "$rollfile" | bzip2 -dc | tar xpf - || { echo "Rollback fail: untar"; exit 1; }
     cd "$opwd"
     echo " done"
   elif [ "$CMD" = "RMUSERDIR" ]; then
@@ -82,7 +82,7 @@ for rollfile in /var/openpanel/conf/rollback/$SESSION_ID/*; do
     /var/openpanel/tools/runas $FUID $FGID chmod $FMODE "$DIR"
     echo -n "Rolling back directory $DIR..."
     cd "$DIR" || { echo "Rollback fail: could not cd to $DIR"; exit 1; }
-    tail +2 < "$rollfile" | bzip2 -dc | /var/openpanel/tools/runas $FUID $FGID tar xpf - || { echo "Rollback fail: untar"; exit 1; }
+    tail -n +2 < "$rollfile" | bzip2 -dc | /var/openpanel/tools/runas $FUID $FGID tar xpf - || { echo "Rollback fail: untar"; exit 1; }
     cd "$opwd"
     echo " done"
   elif [ "$CMD" = "MKUSER" ]; then
