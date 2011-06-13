@@ -47,7 +47,7 @@ for rollfile in /var/openpanel/conf/rollback/$SESSION_ID/*; do
     FUID=`echo "$HDR" | cut -f2 -d" "`
     FGID=`echo "$HDR" | cut -f3 -d" "`
     echo -n "Rolling back $FILE..."
-    /var/openpanel/runas $FUID $FGID /bin/rm -f "$FILE"
+    /var/openpanel/tools/runas $FUID $FGID /bin/rm -f "$FILE"
     echo " done"
   elif [ "$CMD" = "RMDIR" ]; then
     opwd=`pwd`
