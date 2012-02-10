@@ -95,8 +95,6 @@ int AuthdApp::main (void)
 		return 1;
 	}
 	
-	delayedexitok ();
-	
 	fs.chgrp (fname, "openpanel-authd");
 	fs.chmod (fname, 0770);
 	
@@ -104,6 +102,8 @@ int AuthdApp::main (void)
 	{
 		new SocketWorker (&socks);
 	}
+	
+	delayedexitok ();
 	
 	signal (SIGTERM, handle_SIGTERM);
 	

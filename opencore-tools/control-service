@@ -27,7 +27,7 @@ case "$ACTION" in
 		exec /etc/init.d/$SERVICE stop
 		;;
 	reload)
-		/etc/init.d/$SERVICE reload || /etc/init.d/$SERVICE restart || /etc/init.d/$SERVICE status || /etc/init.d/$SERVICE start || exit $?
+		( /etc/init.d/$SERVICE status && /etc/init.d/$SERVICE reload; ) || /etc/init.d/$SERVICE restart || /etc/init.d/$SERVICE start || exit $?
 		;;
 	*)
 		echo "Unknown command"

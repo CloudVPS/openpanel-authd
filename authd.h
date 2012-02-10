@@ -256,6 +256,18 @@ protected:
 
 extern MetaCache MCache;
 
+class RestartScheduler : public thread
+{
+public:
+							 RestartScheduler (void);
+							~RestartScheduler (void);
+							
+	void					 run (void);
+
+protected:
+	lock<value>				 q;
+};
+
 //  -------------------------------------------------------------------------
 /// A worker thread for handling a connection to the daemon.
 //  -------------------------------------------------------------------------
